@@ -13,8 +13,8 @@ type GenreHandler struct {
 }
 
 // -------------------------------GET---------------------------------------------------//
-func (DB *GenreHandler) GetGenres(response http.ResponseWriter, request *http.Request) {
-	rows, err := DB.DB.Query("SELECT id, name FROM genre")
+func (handler *GenreHandler) GetGenres(response http.ResponseWriter, request *http.Request) {
+	rows, err := handler.DB.Query("SELECT id, name FROM genre")
 	if err != nil {
 		http.Error(response, err.Error(), http.StatusInternalServerError)
 		return
@@ -36,14 +36,14 @@ func (DB *GenreHandler) GetGenres(response http.ResponseWriter, request *http.Re
 }
 
 // -------------------------------POST---------------------------------------------------//
-func (DB *GenreHandler) PostUserGenres(response http.ResponseWriter, request *http.Request) {
+func (handler *GenreHandler) PostUserGenres(response http.ResponseWriter, request *http.Request) {
 	var req models.UserGenresRequest
 	if err := json.NewDecoder(request.Body).Decode(&req); err != nil {
 		http.Error(response, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 
-	transaction, err := DB.DB.Begin()
+	transaction, err := handler.DB.Begin()
 	if err != nil {
 		http.Error(response, "Failed to begin transaction", http.StatusInternalServerError)
 		return

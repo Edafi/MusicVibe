@@ -1,7 +1,11 @@
 package models
 
 type User struct {
-	ID       string `json:"id"`
-	Username string `json:"username"`
-	Email    string `json:"email"`
+	ID           string `json:"id"`
+	Email        string `json:"email"`
+	PasswdHash   string `json:"passwd_hash"`
+	Role         string `json:"role"`
+	DisplayName  string `json:"display_name"`
+	AvatarPath   string `json:"avatar_path"`
+	CreationDate string `json:"creation_date"`
 }

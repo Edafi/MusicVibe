@@ -12,17 +12,21 @@ import (
 func SetupRoutes(db *sql.DB) http.Handler {
 	router := mux.NewRouter()
 
-	// user обработчики (без БД)
-	router.HandleFunc("/users", handlers.GetUsers).Methods("GET")
-	router.HandleFunc("/users/{id}", handlers.GetUser).Methods("GET")
-	router.HandleFunc("/users", handlers.CreateUser).Methods("POST")
-	router.HandleFunc("/users/{id}", handlers.UpdateUser).Methods("PUT")
-	router.HandleFunc("/users/{id}", handlers.DeleteUser).Methods("DELETE")
+	userHandler := &handlers.UserHandler{DB: db}
+	router.HandleFunc("/users", userHandler.GetUsers).Methods("GET")
+	router.HandleFunc("/user/{id}", userHandler.GetUser).Methods("GET")
+	router.HandleFunc("/users", userHandler.CreateUser).Methods("POST")
+	router.HandleFunc("/users/{id}", userHandler.UpdateUser).Methods("PUT")
+	router.HandleFunc("/users/{id}", userHandler.DeleteUser).Methods("DELETE")
 
 	// жанровые обработчики
 	genreHandler := &handlers.GenreHandler{DB: db}
 	router.HandleFunc("/genres", genreHandler.GetGenres).Methods("GET")
 	router.HandleFunc("/user/genres", genreHandler.PostUserGenres).Methods("POST")
+
+	musicianHandler := &handlers.MusicianHandler{DB: db}
+	router.HandleFunc("/musicians", musicianHandler.GetMusicians).Methods("GET")
+	router.HandleFunc("/user/following", musicianHandler.PostUserFollowing).Methods("POST")
 
 	// CORS
 	c := cors.New(cors.Options{
