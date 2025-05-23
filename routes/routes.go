@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"database/sql"
 	"net/http"
 
 	"github.com/Edafi/MusicVibe/handlers"
@@ -8,16 +9,22 @@ import (
 	"github.com/rs/cors"
 )
 
-func SetupRoutes() http.Handler {
+func SetupRoutes(db *sql.DB) http.Handler {
 	router := mux.NewRouter()
 
+	// user обработчики (без БД)
 	router.HandleFunc("/users", handlers.GetUsers).Methods("GET")
 	router.HandleFunc("/users/{id}", handlers.GetUser).Methods("GET")
 	router.HandleFunc("/users", handlers.CreateUser).Methods("POST")
 	router.HandleFunc("/users/{id}", handlers.UpdateUser).Methods("PUT")
 	router.HandleFunc("/users/{id}", handlers.DeleteUser).Methods("DELETE")
 
-	// Настройка CORS
+	// жанровые обработчики
+	genreHandler := &handlers.GenreHandler{DB: db}
+	router.HandleFunc("/genres", genreHandler.GetGenres).Methods("GET")
+	router.HandleFunc("/user/genres", genreHandler.PostUserGenres).Methods("POST")
+
+	// CORS
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE"},
