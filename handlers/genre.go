@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/Edafi/MusicVibe/middleware"
 	"github.com/Edafi/MusicVibe/models"
 )
 
@@ -37,7 +38,15 @@ func (handler *GenreHandler) GetGenres(response http.ResponseWriter, request *ht
 
 // -------------------------------POST---------------------------------------------------//
 func (handler *GenreHandler) PostUserGenres(response http.ResponseWriter, request *http.Request) {
-	var req models.UserGenresRequest
+	userID, ok := request.Context().Value(middleware.ContextUserIDKey).(string)
+	if !ok || userID == "" {
+		http.Error(response, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	var req struct {
+		GenreIDs []int `json:"genre_ids"`
+	}
 	if err := json.NewDecoder(request.Body).Decode(&req); err != nil {
 		http.Error(response, "Invalid JSON", http.StatusBadRequest)
 		return
@@ -49,7 +58,7 @@ func (handler *GenreHandler) PostUserGenres(response http.ResponseWriter, reques
 		return
 	}
 
-	_, err = transaction.Exec("DELETE FROM user_genre WHERE user_id = ?", req.UserID)
+	_, err = transaction.Exec("DELETE FROM user_genre WHERE user_id = ?", userID)
 	if err != nil {
 		transaction.Rollback()
 		http.Error(response, "Failed to clear existing genres", http.StatusInternalServerError)
@@ -65,7 +74,7 @@ func (handler *GenreHandler) PostUserGenres(response http.ResponseWriter, reques
 	defer preparedSQL.Close()
 
 	for _, genreID := range req.GenreIDs {
-		_, err := preparedSQL.Exec(req.UserID, genreID)
+		_, err := preparedSQL.Exec(userID, genreID)
 		if err != nil {
 			transaction.Rollback()
 			http.Error(response, "Failed to insert genre", http.StatusInternalServerError)
