@@ -35,7 +35,7 @@ type AuthHandler struct {
 func (handler *AuthHandler) Register(response http.ResponseWriter, request *http.Request) {
 	var creds Credentials
 	if err := json.NewDecoder(request.Body).Decode(&creds); err != nil {
-		log.Println("Insert error:", err)
+		log.Println("Decode error:", err)
 		http.Error(response, "Invalid input", http.StatusBadRequest)
 		return
 	}
@@ -43,22 +43,45 @@ func (handler *AuthHandler) Register(response http.ResponseWriter, request *http
 	// Хеширование пароля
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(creds.Password), bcrypt.DefaultCost)
 	if err != nil {
-		log.Println("Insert error:", err)
+		log.Println("Hash error:", err)
 		http.Error(response, "Error hashing password", http.StatusInternalServerError)
 		return
 	}
 
 	id := uuid.New().String()
+	role := "user"
+
 	// Вставка пользователя
-	query := `INSERT INTO user (id, name, email, passwd_hash, role) VALUES (?, ?, ?, ?, 'user')`
-	_, err = handler.DB.Exec(query, id, creds.Username, creds.Email, hashedPassword)
+	query := `INSERT INTO user (id, name, email, passwd_hash, role) VALUES (?, ?, ?, ?, ?)`
+	_, err = handler.DB.Exec(query, id, creds.Username, creds.Email, hashedPassword, role)
 	if err != nil {
 		log.Println("Insert error:", err)
 		http.Error(response, "Error inserting user", http.StatusInternalServerError)
 		return
 	}
 
-	response.WriteHeader(http.StatusCreated)
+	// Создание JWT-токена
+	expiration := time.Now().Add(24 * time.Hour)
+	claims := &Claims{
+		UserID: id,
+		Role:   role,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expiration),
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString(jwtKey)
+	if err != nil {
+		log.Println("Token error:", err)
+		http.Error(response, "Error signing token", http.StatusInternalServerError)
+		return
+	}
+
+	// Отправка токена клиенту
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(map[string]string{
+		"token": tokenString,
+	})
 }
 
 // Логин
