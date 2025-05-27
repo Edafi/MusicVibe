@@ -57,7 +57,7 @@ func SetupRoutes(db *sql.DB) http.Handler {
 		AllowedOrigins: []string{"*"},
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE"},
 		AllowedHeaders: []string{"Content-Type", "Authorization"},
-		Debug:          true,
+		Debug:          false,
 	})
 
 	return c.Handler(router)
