@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -43,9 +44,10 @@ func (handler *AuthHandler) Register(response http.ResponseWriter, request *http
 		return
 	}
 
+	id := uuid.New().String()
 	// Вставка пользователя
-	query := `INSERT INTO user (username, email, password_hash, role) VALUES (?, ?, ?, 'user')`
-	_, err = handler.DB.Exec(query, creds.Username, creds.Email, hashedPassword)
+	query := `INSERT INTO user (id, username, email, password_hash, role) VALUES (?, ?, ?, 'user')`
+	_, err = handler.DB.Exec(query, id, creds.Username, creds.Email, hashedPassword)
 	if err != nil {
 		http.Error(response, "Error inserting user", http.StatusInternalServerError)
 		return
