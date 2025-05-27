@@ -24,7 +24,7 @@ func (handler *UserHandler) GetUsers(response http.ResponseWriter, request *http
 	var users []models.User
 	for rows.Next() {
 		var u models.User
-		if err := rows.Scan(&u.ID, &u.Email, &u.PasswdHash, &u.Role, &u.DisplayName, &u.AvatarPath, &u.CreationDate); err != nil {
+		if err := rows.Scan(&u.ID, &u.Email, &u.PasswdHash, &u.Role, &u.Username, &u.AvatarPath, &u.CreationDate); err != nil {
 			http.Error(response, "Scan error", http.StatusInternalServerError)
 			return
 		}
@@ -41,7 +41,7 @@ func (handler *UserHandler) GetUser(response http.ResponseWriter, request *http.
 
 	var user models.User
 	err := handler.DB.QueryRow("SELECT id, email, passwd_hash, role, display_name, avatar_path, creation_date FROM user WHERE id = ?", id).
-		Scan(&user.ID, &user.Email, &user.PasswdHash, &user.Role, &user.DisplayName, &user.AvatarPath, &user.CreationDate)
+		Scan(&user.ID, &user.Email, &user.PasswdHash, &user.Role, &user.Username, &user.AvatarPath, &user.CreationDate)
 	if err == sql.ErrNoRows {
 		http.NotFound(response, request)
 		return
@@ -62,7 +62,7 @@ func (handler *UserHandler) CreateUser(response http.ResponseWriter, request *ht
 	}
 
 	_, err := handler.DB.Exec("INSERT INTO user (id, email, passwd_hash, role, display_name, avatar_path) VALUES (?, ?, ?, ?, ?, ?)",
-		u.ID, u.Email, u.PasswdHash, u.Role, u.DisplayName, u.AvatarPath)
+		u.ID, u.Email, u.PasswdHash, u.Role, u.Username, u.AvatarPath)
 	if err != nil {
 		http.Error(response, "Database insert error", http.StatusInternalServerError)
 		return
@@ -90,7 +90,7 @@ func (handler *UserHandler) UpdateUser(response http.ResponseWriter, request *ht
 		return
 	}
 	_, err := handler.DB.Exec("UPDATE user SET email=?, passwd_hash=?, role=?, display_name=?, avatar_path=? WHERE id=?",
-		user.Email, user.PasswdHash, user.Role, user.DisplayName, user.AvatarPath, id)
+		user.Email, user.PasswdHash, user.Role, user.Username, user.AvatarPath, id)
 	if err != nil {
 		http.Error(response, "Failed to update user", http.StatusInternalServerError)
 		return

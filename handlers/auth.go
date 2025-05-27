@@ -3,10 +3,9 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
-
-	"log"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -40,7 +39,6 @@ func (handler *AuthHandler) Register(response http.ResponseWriter, request *http
 		return
 	}
 
-	// Хеширование пароля
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(creds.Password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Println("Hash error:", err)
@@ -51,8 +49,7 @@ func (handler *AuthHandler) Register(response http.ResponseWriter, request *http
 	id := uuid.New().String()
 	role := "user"
 
-	// Вставка пользователя
-	query := `INSERT INTO user (id, name, email, passwd_hash, role) VALUES (?, ?, ?, ?, ?)`
+	query := `INSERT INTO user (id, username, email, passwd_hash, role) VALUES (?, ?, ?, ?, ?)`
 	_, err = handler.DB.Exec(query, id, creds.Username, creds.Email, hashedPassword, role)
 	if err != nil {
 		log.Println("Insert error:", err)
@@ -60,7 +57,7 @@ func (handler *AuthHandler) Register(response http.ResponseWriter, request *http
 		return
 	}
 
-	// Создание JWT-токена
+	// Создание JWT
 	expiration := time.Now().Add(24 * time.Hour)
 	claims := &Claims{
 		UserID: id,
@@ -77,10 +74,15 @@ func (handler *AuthHandler) Register(response http.ResponseWriter, request *http
 		return
 	}
 
-	// Отправка токена клиенту
 	response.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(response).Encode(map[string]string{
+	json.NewEncoder(response).Encode(map[string]interface{}{
 		"token": tokenString,
+		"user": map[string]interface{}{
+			"id":                id,
+			"email":             creds.Email,
+			"username":          creds.Username,
+			"hasCompletedSetup": false, // по умолчанию
+		},
 	})
 }
 
@@ -88,27 +90,26 @@ func (handler *AuthHandler) Register(response http.ResponseWriter, request *http
 func (handler *AuthHandler) Login(response http.ResponseWriter, request *http.Request) {
 	var creds Credentials
 	if err := json.NewDecoder(request.Body).Decode(&creds); err != nil {
-		log.Println("Insert error:", err)
+		log.Println("Login decode error:", err)
 		http.Error(response, "Invalid input", http.StatusBadRequest)
 		return
 	}
 
-	var userID, passwordHash, role string
-	err := handler.DB.QueryRow("SELECT id, passwd_hash, role FROM user WHERE email = ?", creds.Email).Scan(&userID, &passwordHash, &role)
+	var userID, username, email, passwordHash, role string
+	query := `SELECT id, username, email, passwd_hash, role FROM user WHERE email = ?`
+	err := handler.DB.QueryRow(query, creds.Email).Scan(&userID, &username, &email, &passwordHash, &role)
 	if err != nil {
-		log.Println("Insert error:", err)
+		log.Println("User not found:", err)
 		http.Error(response, "User not found", http.StatusUnauthorized)
 		return
 	}
 
-	// Проверка пароля
 	if err := bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(creds.Password)); err != nil {
-		log.Println("Insert error:", err)
+		log.Println("Password mismatch:", err)
 		http.Error(response, "Invalid credentials", http.StatusUnauthorized)
 		return
 	}
 
-	// Создание токена
 	expiration := time.Now().Add(24 * time.Hour)
 	claims := &Claims{
 		UserID: userID,
@@ -120,12 +121,54 @@ func (handler *AuthHandler) Login(response http.ResponseWriter, request *http.Re
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString(jwtKey)
 	if err != nil {
-		log.Println("Insert error:", err)
+		log.Println("Token error:", err)
 		http.Error(response, "Error signing token", http.StatusInternalServerError)
 		return
 	}
 
-	json.NewEncoder(response).Encode(map[string]string{
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(map[string]interface{}{
 		"token": tokenString,
+		"user": map[string]interface{}{
+			"id":                userID,
+			"email":             email,
+			"username":          username,
+			"hasCompletedSetup": false, // можно потом получить это из базы, если добавишь флаг
+		},
+	})
+}
+func (handler *AuthHandler) Me(response http.ResponseWriter, request *http.Request) {
+	authHeader := request.Header.Get("Authorization")
+	if authHeader == "" {
+		http.Error(response, "Missing token", http.StatusUnauthorized)
+		return
+	}
+
+	tokenString := authHeader[len("Bearer "):]
+
+	claims := &Claims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		return jwtKey, nil
+	})
+	if err != nil || !token.Valid {
+		http.Error(response, "Invalid token", http.StatusUnauthorized)
+		return
+	}
+
+	// Достаём данные пользователя по claims.UserID
+	var username, email string
+	query := `SELECT name, email FROM user WHERE id = ?`
+	err = handler.DB.QueryRow(query, claims.UserID).Scan(&username, &email)
+	if err != nil {
+		http.Error(response, "User not found", http.StatusNotFound)
+		return
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(map[string]interface{}{
+		"id":                claims.UserID,
+		"email":             email,
+		"username":          username,
+		"hasCompletedSetup": false,
 	})
 }

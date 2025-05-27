@@ -5,7 +5,7 @@ type User struct {
 	Email        string `json:"email"`
 	PasswdHash   string `json:"passwd_hash"`
 	Role         string `json:"role"`
-	DisplayName  string `json:"display_name"`
+	Username     string `json:"username"`
 	AvatarPath   string `json:"avatar_path"`
 	CreationDate string `json:"creation_date"`
 }
