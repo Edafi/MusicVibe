@@ -73,7 +73,7 @@ func (handler *GenreHandler) PostUserGenres(response http.ResponseWriter, reques
 
 	preparedSQL, err := transaction.Prepare("INSERT INTO user_genre (user_id, genre_id) VALUES (?, ?)")
 	if err != nil {
-		log.Println("error inserting sql govno:", err)
+		log.Println("error prepare inserting sql govno:", err)
 		transaction.Rollback()
 		http.Error(response, "Failed to prepare insert", http.StatusInternalServerError)
 		return
@@ -83,7 +83,7 @@ func (handler *GenreHandler) PostUserGenres(response http.ResponseWriter, reques
 	for _, genreID := range req.GenreIDs {
 		_, err := preparedSQL.Exec(userID, genreID)
 		if err != nil {
-			log.Println("failed to generate json govno:", err)
+			log.Println("failed to execute sql query govno:", err)
 			transaction.Rollback()
 			http.Error(response, "Failed to insert genre", http.StatusInternalServerError)
 			return
@@ -91,7 +91,7 @@ func (handler *GenreHandler) PostUserGenres(response http.ResponseWriter, reques
 	}
 
 	if err := transaction.Commit(); err != nil {
-		log.Fatal(err)
+		log.Println("failed to commit query govno:", err)
 		http.Error(response, "Failed to commit", http.StatusInternalServerError)
 		return
 	}
