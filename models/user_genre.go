@@ -7,5 +7,5 @@ type UserGenre struct {
 
 // вторая страница
 type UserGenresRequest struct {
-	GenreIDs []int `json:"genre_ids"`
+	GenreIDs []int `json:"genreIds"`
 }
