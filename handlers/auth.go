@@ -137,6 +137,7 @@ func (handler *AuthHandler) Login(response http.ResponseWriter, request *http.Re
 		},
 	})
 }
+
 func (handler *AuthHandler) Me(response http.ResponseWriter, request *http.Request) {
 	authHeader := request.Header.Get("Authorization")
 	if authHeader == "" {
@@ -157,7 +158,7 @@ func (handler *AuthHandler) Me(response http.ResponseWriter, request *http.Reque
 
 	// Достаём данные пользователя по claims.UserID
 	var username, email string
-	query := `SELECT name, email FROM user WHERE id = ?`
+	query := `SELECT username, email FROM user WHERE id = ?`
 	err = handler.DB.QueryRow(query, claims.UserID).Scan(&username, &email)
 	if err != nil {
 		http.Error(response, "User not found", http.StatusNotFound)
