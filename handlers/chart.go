@@ -14,7 +14,7 @@ type ChartHandler struct {
 }
 
 func (h *ChartHandler) GetChartTracks(w http.ResponseWriter, r *http.Request) {
-	// JWT: просто для защиты, userID не используется
+
 	_ = r.Context().Value(middleware.ContextUserIDKey).(string)
 
 	query := `
