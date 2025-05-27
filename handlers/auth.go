@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"time"
 
+	"log"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -33,6 +35,7 @@ type AuthHandler struct {
 func (handler *AuthHandler) Register(response http.ResponseWriter, request *http.Request) {
 	var creds Credentials
 	if err := json.NewDecoder(request.Body).Decode(&creds); err != nil {
+		log.Println("Insert error:", err)
 		http.Error(response, "Invalid input", http.StatusBadRequest)
 		return
 	}
@@ -40,15 +43,17 @@ func (handler *AuthHandler) Register(response http.ResponseWriter, request *http
 	// Хеширование пароля
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(creds.Password), bcrypt.DefaultCost)
 	if err != nil {
+		log.Println("Insert error:", err)
 		http.Error(response, "Error hashing password", http.StatusInternalServerError)
 		return
 	}
 
 	id := uuid.New().String()
 	// Вставка пользователя
-	query := `INSERT INTO user (id, username, email, passwd_hash, role) VALUES (?, ?, ?, ?, 'user')`
+	query := `INSERT INTO user (id, name, email, passwd_hash, role) VALUES (?, ?, ?, ?, 'user')`
 	_, err = handler.DB.Exec(query, id, creds.Username, creds.Email, hashedPassword)
 	if err != nil {
+		log.Println("Insert error:", err)
 		http.Error(response, "Error inserting user", http.StatusInternalServerError)
 		return
 	}
@@ -60,19 +65,22 @@ func (handler *AuthHandler) Register(response http.ResponseWriter, request *http
 func (handler *AuthHandler) Login(response http.ResponseWriter, request *http.Request) {
 	var creds Credentials
 	if err := json.NewDecoder(request.Body).Decode(&creds); err != nil {
+		log.Println("Insert error:", err)
 		http.Error(response, "Invalid input", http.StatusBadRequest)
 		return
 	}
 
 	var userID, passwordHash, role string
-	err := handler.DB.QueryRow("SELECT id, password_hash, role FROM user WHERE email = ?", creds.Email).Scan(&userID, &passwordHash, &role)
+	err := handler.DB.QueryRow("SELECT id, passwd_hash, role FROM user WHERE email = ?", creds.Email).Scan(&userID, &passwordHash, &role)
 	if err != nil {
+		log.Println("Insert error:", err)
 		http.Error(response, "User not found", http.StatusUnauthorized)
 		return
 	}
 
 	// Проверка пароля
 	if err := bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(creds.Password)); err != nil {
+		log.Println("Insert error:", err)
 		http.Error(response, "Invalid credentials", http.StatusUnauthorized)
 		return
 	}
@@ -89,6 +97,7 @@ func (handler *AuthHandler) Login(response http.ResponseWriter, request *http.Re
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString(jwtKey)
 	if err != nil {
+		log.Println("Insert error:", err)
 		http.Error(response, "Error signing token", http.StatusInternalServerError)
 		return
 	}
