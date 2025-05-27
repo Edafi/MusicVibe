@@ -42,7 +42,7 @@ func (handler *GenreHandler) GetGenres(response http.ResponseWriter, request *ht
 func (handler *GenreHandler) PostUserGenres(response http.ResponseWriter, request *http.Request) {
 	userID, ok := request.Context().Value(middleware.ContextUserIDKey).(string)
 	if !ok || userID == "" {
-		log.Fatal(ok)
+		log.Println("token govno:", ok)
 		http.Error(response, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -51,20 +51,21 @@ func (handler *GenreHandler) PostUserGenres(response http.ResponseWriter, reques
 		GenreIDs []int `json:"genre_ids"`
 	}
 	if err := json.NewDecoder(request.Body).Decode(&req); err != nil {
+		log.Println("json decode govno:", err)
 		http.Error(response, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 
 	transaction, err := handler.DB.Begin()
 	if err != nil {
-		log.Fatal(err)
+		log.Println("sql trasaction creation govno:", err)
 		http.Error(response, "Failed to begin transaction", http.StatusInternalServerError)
 		return
 	}
 
 	_, err = transaction.Exec("DELETE FROM user_genre WHERE user_id = ?", userID)
 	if err != nil {
-		log.Fatal(err)
+		log.Println("error deleting genres govno:", err)
 		transaction.Rollback()
 		http.Error(response, "Failed to clear existing genres", http.StatusInternalServerError)
 		return
@@ -72,7 +73,7 @@ func (handler *GenreHandler) PostUserGenres(response http.ResponseWriter, reques
 
 	preparedSQL, err := transaction.Prepare("INSERT INTO user_genre (user_id, genre_id) VALUES (?, ?)")
 	if err != nil {
-		log.Fatal(err)
+		log.Println("error inserting sql govno:", err)
 		transaction.Rollback()
 		http.Error(response, "Failed to prepare insert", http.StatusInternalServerError)
 		return
@@ -82,7 +83,7 @@ func (handler *GenreHandler) PostUserGenres(response http.ResponseWriter, reques
 	for _, genreID := range req.GenreIDs {
 		_, err := preparedSQL.Exec(userID, genreID)
 		if err != nil {
-			log.Fatal(err)
+			log.Println("failed to generate json govno:", err)
 			transaction.Rollback()
 			http.Error(response, "Failed to insert genre", http.StatusInternalServerError)
 			return
