@@ -46,7 +46,7 @@ func (handler *AuthHandler) Register(response http.ResponseWriter, request *http
 
 	id := uuid.New().String()
 	// Вставка пользователя
-	query := `INSERT INTO user (id, username, email, password_hash, role) VALUES (?, ?, ?, 'user')`
+	query := `INSERT INTO user (id, username, email, passwd_hash, role) VALUES (?, ?, ?, ?, 'user')`
 	_, err = handler.DB.Exec(query, id, creds.Username, creds.Email, hashedPassword)
 	if err != nil {
 		http.Error(response, "Error inserting user", http.StatusInternalServerError)
