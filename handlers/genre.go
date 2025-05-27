@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/Edafi/MusicVibe/middleware"
@@ -17,6 +18,7 @@ type GenreHandler struct {
 func (handler *GenreHandler) GetGenres(response http.ResponseWriter, request *http.Request) {
 	rows, err := handler.DB.Query("SELECT id, name FROM genre")
 	if err != nil {
+		log.Fatal(err)
 		http.Error(response, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -40,6 +42,7 @@ func (handler *GenreHandler) GetGenres(response http.ResponseWriter, request *ht
 func (handler *GenreHandler) PostUserGenres(response http.ResponseWriter, request *http.Request) {
 	userID, ok := request.Context().Value(middleware.ContextUserIDKey).(string)
 	if !ok || userID == "" {
+		log.Fatal(ok)
 		http.Error(response, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -54,12 +57,14 @@ func (handler *GenreHandler) PostUserGenres(response http.ResponseWriter, reques
 
 	transaction, err := handler.DB.Begin()
 	if err != nil {
+		log.Fatal(err)
 		http.Error(response, "Failed to begin transaction", http.StatusInternalServerError)
 		return
 	}
 
 	_, err = transaction.Exec("DELETE FROM user_genre WHERE user_id = ?", userID)
 	if err != nil {
+		log.Fatal(err)
 		transaction.Rollback()
 		http.Error(response, "Failed to clear existing genres", http.StatusInternalServerError)
 		return
@@ -67,6 +72,7 @@ func (handler *GenreHandler) PostUserGenres(response http.ResponseWriter, reques
 
 	preparedSQL, err := transaction.Prepare("INSERT INTO user_genre (user_id, genre_id) VALUES (?, ?)")
 	if err != nil {
+		log.Fatal(err)
 		transaction.Rollback()
 		http.Error(response, "Failed to prepare insert", http.StatusInternalServerError)
 		return
@@ -76,6 +82,7 @@ func (handler *GenreHandler) PostUserGenres(response http.ResponseWriter, reques
 	for _, genreID := range req.GenreIDs {
 		_, err := preparedSQL.Exec(userID, genreID)
 		if err != nil {
+			log.Fatal(err)
 			transaction.Rollback()
 			http.Error(response, "Failed to insert genre", http.StatusInternalServerError)
 			return
@@ -83,6 +90,7 @@ func (handler *GenreHandler) PostUserGenres(response http.ResponseWriter, reques
 	}
 
 	if err := transaction.Commit(); err != nil {
+		log.Fatal(err)
 		http.Error(response, "Failed to commit", http.StatusInternalServerError)
 		return
 	}
