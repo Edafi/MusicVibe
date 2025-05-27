@@ -48,7 +48,7 @@ func (handler *GenreHandler) PostUserGenres(response http.ResponseWriter, reques
 	}
 
 	var req struct {
-		GenreIDs []int `json:"genre_ids"`
+		GenreIDs []int `json:"genreIds"`
 	}
 	if err := json.NewDecoder(request.Body).Decode(&req); err != nil {
 		log.Println("json decode govno:", err)
