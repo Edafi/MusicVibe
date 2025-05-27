@@ -55,7 +55,7 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE"},
-		AllowedHeaders: []string{"Content-Type"},
+		AllowedHeaders: []string{"Content-Type", "Authorization"},
 		Debug:          true,
 	})
 
