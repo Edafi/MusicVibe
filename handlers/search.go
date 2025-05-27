@@ -12,12 +12,6 @@ type SearchHandler struct {
 	DB *sql.DB
 }
 
-type TrackResponse struct {
-	models.Track
-	Artist    string `json:"artist"`
-	CoverPath string `json:"cover_path"`
-}
-
 func (handler *SearchHandler) GetNewTracks(response http.ResponseWriter, request *http.Request) {
 	query := `
 	SELECT t.id, t.musician_id, t.album_id, t.title, t.duration, t.file_path,
@@ -37,9 +31,9 @@ func (handler *SearchHandler) GetNewTracks(response http.ResponseWriter, request
 	}
 	defer rows.Close()
 
-	var tracks []TrackResponse
+	var tracks []models.TrackResponse
 	for rows.Next() {
-		var tr TrackResponse
+		var tr models.TrackResponse
 		if err := rows.Scan(
 			&tr.ID, &tr.MusicianID, &tr.AlbumID, &tr.Title, &tr.Duration,
 			&tr.FilePath, &tr.GenreID, &tr.StreamCount, &tr.Visibility,
@@ -72,9 +66,9 @@ func (handler *SearchHandler) GetChartTracks(response http.ResponseWriter, reque
 	}
 	defer rows.Close()
 
-	var tracks []TrackResponse
+	var tracks []models.TrackResponse
 	for rows.Next() {
-		var tr TrackResponse
+		var tr models.TrackResponse
 		if err := rows.Scan(
 			&tr.ID, &tr.MusicianID, &tr.AlbumID, &tr.Title, &tr.Duration,
 			&tr.FilePath, &tr.GenreID, &tr.StreamCount, &tr.Visibility,
@@ -114,9 +108,9 @@ func (handler *SearchHandler) SearchTracks(response http.ResponseWriter, request
 	}
 	defer rows.Close()
 
-	var tracks []TrackResponse
+	var tracks []models.TrackResponse
 	for rows.Next() {
-		var tr TrackResponse
+		var tr models.TrackResponse
 		if err := rows.Scan(
 			&tr.ID, &tr.MusicianID, &tr.AlbumID, &tr.Title, &tr.Duration,
 			&tr.FilePath, &tr.GenreID, &tr.StreamCount, &tr.Visibility,

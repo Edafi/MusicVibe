@@ -13,12 +13,6 @@ type HomeHandler struct {
 	DB *sql.DB
 }
 
-type TrackResponse struct {
-	models.Track
-	Artist    string `json:"artist"`
-	CoverPath string `json:"cover_path"`
-}
-
 type AlbumResponse struct {
 	models.Album
 	Artist string `json:"artist"`
@@ -41,9 +35,9 @@ func (handler *HomeHandler) GetRecommendedTracks(response http.ResponseWriter, r
 	}
 	defer rows.Close()
 
-	var tracks []TrackResponse
+	var tracks []models.TrackResponse
 	for rows.Next() {
-		var tr TrackResponse
+		var tr models.TrackResponse
 		if err := rows.Scan(
 			&tr.ID, &tr.MusicianID, &tr.AlbumID, &tr.Title, &tr.Duration,
 			&tr.FilePath, &tr.GenreID, &tr.StreamCount, &tr.Visibility,
@@ -110,9 +104,9 @@ func (handler *HomeHandler) GetTrackedTracks(response http.ResponseWriter, reque
 	}
 	defer rows.Close()
 
-	var tracks []TrackResponse
+	var tracks []models.TrackResponse
 	for rows.Next() {
-		var tr TrackResponse
+		var tr models.TrackResponse
 		if err := rows.Scan(
 			&tr.ID, &tr.MusicianID, &tr.AlbumID, &tr.Title, &tr.Duration,
 			&tr.FilePath, &tr.GenreID, &tr.StreamCount, &tr.Visibility,

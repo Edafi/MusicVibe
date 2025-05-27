@@ -11,3 +11,9 @@ type Track struct {
 	StreamCount int    `json:"stream_count"`
 	Visibility  string `json:"visibility"`
 }
+
+type TrackResponse struct {
+	Track
+	Artist    string `json:"artist"`
+	CoverPath string `json:"cover_path"`
+}
