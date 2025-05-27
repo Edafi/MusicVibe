@@ -21,7 +21,7 @@ type Credentials struct {
 }
 
 type Claims struct {
-	UserID string `json:"user_id"`
+	UserID string `json:"id"`
 	Role   string `json:"role"`
 	jwt.RegisteredClaims
 }
@@ -141,6 +141,7 @@ func (handler *AuthHandler) Login(response http.ResponseWriter, request *http.Re
 func (handler *AuthHandler) Me(response http.ResponseWriter, request *http.Request) {
 	authHeader := request.Header.Get("Authorization")
 	if authHeader == "" {
+		log.Println("Missing token govno o kurwa!!!")
 		http.Error(response, "Missing token", http.StatusUnauthorized)
 		return
 	}
@@ -152,6 +153,7 @@ func (handler *AuthHandler) Me(response http.ResponseWriter, request *http.Reque
 		return jwtKey, nil
 	})
 	if err != nil || !token.Valid {
+		log.Println("Invalid token ya perdole ki bedle")
 		http.Error(response, "Invalid token", http.StatusUnauthorized)
 		return
 	}
@@ -161,6 +163,7 @@ func (handler *AuthHandler) Me(response http.ResponseWriter, request *http.Reque
 	query := `SELECT username, email FROM user WHERE id = ?`
 	err = handler.DB.QueryRow(query, claims.UserID).Scan(&username, &email)
 	if err != nil {
+		log.Println("Kurwa user is not in blyad db")
 		http.Error(response, "User not found", http.StatusNotFound)
 		return
 	}
