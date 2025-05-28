@@ -49,7 +49,7 @@ func (handler *AuthHandler) Register(response http.ResponseWriter, request *http
 	id := uuid.New().String()
 	role := "user"
 
-	query := `INSERT INTO user (id, username, email, passwd_hash, role, has_complete_setup, avatar_path) VALUES (?, ?, ?, ?, ?, ?)`
+	query := `INSERT INTO user (id, username, email, passwd_hash, role, has_complete_setup, avatar_path) VALUES (?, ?, ?, ?, ?, ?, ?)`
 	_, err = handler.DB.Exec(query, id, creds.Username, creds.Email, hashedPassword, role, false, "/avatarUser/defaultAvatar.png")
 	if err != nil {
 		log.Println("Insert error:", err)
