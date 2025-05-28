@@ -49,8 +49,8 @@ func (handler *AuthHandler) Register(response http.ResponseWriter, request *http
 	id := uuid.New().String()
 	role := "user"
 
-	query := `INSERT INTO user (id, username, email, passwd_hash, role, has_complete_setup) VALUES (?, ?, ?, ?, ?, ?)`
-	_, err = handler.DB.Exec(query, id, creds.Username, creds.Email, hashedPassword, role, false)
+	query := `INSERT INTO user (id, username, email, passwd_hash, role, has_complete_setup, avatar_path) VALUES (?, ?, ?, ?, ?, ?)`
+	_, err = handler.DB.Exec(query, id, creds.Username, creds.Email, hashedPassword, role, false, "/avatarUser/defaultAvatar.png")
 	if err != nil {
 		log.Println("Insert error:", err)
 		http.Error(response, "Error inserting user", http.StatusInternalServerError)
@@ -158,33 +158,46 @@ func (handler *AuthHandler) Me(response http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	// Получаем основные поля пользователя
-	var name, email, avatarUrl, backgroundUrl, description string
-	var hasCompletedSetup bool
+	// Основные поля пользователя
+	var (
+		name, email                 string
+		avatarPath                  string
+		backgroundPath, description sql.NullString
+		hasCompletedSetup           bool
+	)
+
 	query := `
 		SELECT username, email, avatar_path, background_path, description, has_complete_setup 
 		FROM user
 		WHERE id = ?`
 	err = handler.DB.QueryRow(query, claims.UserID).Scan(
-		&name, &email, &avatarUrl, &backgroundUrl, &description, &hasCompletedSetup)
+		&name, &email, &avatarPath, &backgroundPath, &description, &hasCompletedSetup)
 	if err != nil {
-		log.Println("UserID from token:", claims.UserID)
-		log.Println("Error : ", err)
-		log.Println("User not found")
+		log.Printf("User not found: %v", err)
 		http.Error(response, "User not found", http.StatusNotFound)
 		return
 	}
 
-	// Получаем жанры пользователя
+	// Обработка null в таблице
+	bgPath := ""
+	if backgroundPath.Valid {
+		bgPath = backgroundPath.String
+	}
+
+	desc := ""
+	if description.Valid {
+		desc = description.String
+	}
+
+	hasSetup := false
+
+	// Жанры
 	genres := []string{}
 	rows, err := handler.DB.Query(`
 		SELECT g.name
 		FROM genre g
 		JOIN user_genre ug ON g.id = ug.genre_id
 		WHERE ug.user_id = ?`, claims.UserID)
-	if err != nil {
-		log.Println("Genres error:", err)
-	}
 	if err == nil {
 		defer rows.Close()
 		for rows.Next() {
@@ -193,18 +206,17 @@ func (handler *AuthHandler) Me(response http.ResponseWriter, request *http.Reque
 				genres = append(genres, genre)
 			}
 		}
+	} else {
+		log.Println("Genres error:", err)
 	}
 
-	// Получаем соцсети пользователя
+	// Социальные сети
 	socialLinks := map[string]string{}
 	socialRows, err := handler.DB.Query(`
 		SELECT sn.name, us.url
 		FROM social_network sn
 		JOIN user_social_network us ON sn.id = us.social_id
 		WHERE us.user_id = ?`, claims.UserID)
-	if err != nil {
-		log.Println("Social_networks error:", err)
-	}
 	if err == nil {
 		defer socialRows.Close()
 		for socialRows.Next() {
@@ -213,20 +225,22 @@ func (handler *AuthHandler) Me(response http.ResponseWriter, request *http.Reque
 				socialLinks[name] = url
 			}
 		}
+	} else {
+		log.Println("Social_networks error:", err)
 	}
 
-	// Отправляем ответ
+	// Ответ
 	response.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(response).Encode(map[string]interface{}{
 		"user": map[string]interface{}{
 			"id":                claims.UserID,
 			"name":              name,
 			"email":             email,
-			"avatarUrl":         avatarUrl,
-			"backgroundUrl":     backgroundUrl,
-			"description":       description,
+			"avatarUrl":         avatarPath,
+			"backgroundUrl":     bgPath,
+			"description":       desc,
 			"genres":            genres,
-			"hasCompletedSetup": hasCompletedSetup,
+			"hasCompletedSetup": hasSetup,
 			"socialLinks":       socialLinks,
 		},
 	})
