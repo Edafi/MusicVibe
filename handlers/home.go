@@ -22,8 +22,9 @@ func (handler *HomeHandler) GetRecommendedTracks(response http.ResponseWriter, r
 	query := `
 	SELECT t.id, t.musician_id, t.album_id, t.title, t.duration, t.file_path, 
 	       t.genre_id, t.stream_count, t.visibility,
-	       m.name AS artist, m.avatar_path AS cover_path
+	       m.name AS artist, a.cover_path
 	FROM track t
+	join album a ON t.album_id = a.id
 	JOIN musician m ON t.musician_id = m.id
 	LIMIT 8;
 	`
