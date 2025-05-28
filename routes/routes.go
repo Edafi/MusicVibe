@@ -21,7 +21,6 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	router.HandleFunc("/users/{id}", userHandler.UpdateUser).Methods("PUT")
 	router.HandleFunc("/users/{id}", userHandler.DeleteUser).Methods("DELETE")
 
-	homeHandler := &handlers.HomeHandler{DB: db}
 	secured := router.PathPrefix("/").Subrouter()
 	secured.Use(middleware.JWTMiddleware)
 
@@ -43,9 +42,13 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	router.HandleFunc("/login", authHandler.Login).Methods("POST")
 	router.HandleFunc("/auth/me", authHandler.Me).Methods("GET")
 
+	homeHandler := &handlers.HomeHandler{DB: db}
 	secured.HandleFunc("/tracks/recommended", homeHandler.GetRecommendedTracks).Methods("GET")
 	secured.HandleFunc("/albums/recommended", homeHandler.GetRecommendedAlbums).Methods("GET")
 	secured.HandleFunc("/tracks/tracked", homeHandler.GetTrackedTracks).Methods("GET")
+	secured.HandleFunc("/home/tracks/recomended", homeHandler.GetHomeRecommendedTracks).Methods("GET")
+	secured.HandleFunc("/home/albums/recomended", homeHandler.GetHomeRecommendedTracks).Methods("GET")
+	secured.HandleFunc("/home/tracks/tracked", homeHandler.GetHomeRecommendedTracks).Methods("GET")
 
 	trackHandler := &handlers.SearchHandler{DB: db}
 	secured.HandleFunc("/tracks/new", trackHandler.GetNewTracks).Methods("GET")

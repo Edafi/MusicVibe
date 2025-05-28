@@ -28,3 +28,12 @@ type RecommendedTrack struct {
 	Duration   int    `json:"duration"`
 	Plays      int    `json:"plays"`
 }
+
+type HomeRecomendedTrack struct {
+	ID           string `json: "id"`
+	Title        string `json: "title"`
+	MusicianID   string `json: "artistId"`
+	MusicianName string `json: "artistName"`
+	ImageURL     string `json: "imageUrl"`
+	Plays        int    `json: "plays"`
+}

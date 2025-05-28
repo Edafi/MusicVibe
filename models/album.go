@@ -9,3 +9,13 @@ type Album struct {
 	GenreID     int    `json:"genre_id"`
 	Description string `json:"description"`
 }
+
+type RecommendedAlbum struct {
+	ID          string `json:"id"`
+	Title       string `json:"title"`
+	ArtistID    string `json:"artistId"`
+	ArtistName  string `json:"artistName"`
+	CoverUrl    string `json:"coverUrl"`
+	Year        int    `json:"year"`
+	Description string `json:"description"`
+}
