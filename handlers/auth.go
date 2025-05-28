@@ -169,6 +169,7 @@ func (handler *AuthHandler) Me(response http.ResponseWriter, request *http.Reque
 		&name, &email, &avatarUrl, &backgroundUrl, &description, &hasCompletedSetup)
 	if err != nil {
 		log.Println("UserID from token:", claims.UserID)
+		log.Println("Error : ", err)
 		log.Println("User not found")
 		http.Error(response, "User not found", http.StatusNotFound)
 		return
