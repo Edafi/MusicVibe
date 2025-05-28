@@ -20,8 +20,7 @@ type AlbumResponse struct {
 
 func (handler *HomeHandler) GetRecommendedTracks(response http.ResponseWriter, request *http.Request) {
 	query := `
-	SELECT t.id, t.musician_id, t.album_id, t.title, t.duration, t.file_path, 
-	       t.genre_id, t.stream_count, t.visibility,
+	SELECT t.id, t.musician_id, t.title, t.duration, t.file_path, t.stream_count,
 	       m.name AS artist, a.cover_path
 	FROM track t
 	join album a ON t.album_id = a.id
@@ -36,13 +35,12 @@ func (handler *HomeHandler) GetRecommendedTracks(response http.ResponseWriter, r
 	}
 	defer rows.Close()
 
-	var tracks []models.TrackResponse
+	var tracks []models.RecommendedTrack
 	for rows.Next() {
-		var tr models.TrackResponse
+		var tr models.RecommendedTrack
 		if err := rows.Scan(
-			&tr.ID, &tr.MusicianID, &tr.AlbumID, &tr.Title, &tr.Duration,
-			&tr.FilePath, &tr.GenreID, &tr.StreamCount, &tr.Visibility,
-			&tr.Artist, &tr.CoverPath,
+			&tr.ID, &tr.ArtistID, &tr.Title, &tr.Duration, &tr.AudioURL, &tr.Plays,
+			&tr.ArtistName, &tr.ImageURL,
 		); err != nil {
 			http.Error(response, err.Error(), http.StatusInternalServerError)
 			return
