@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 
@@ -16,40 +17,101 @@ type MusicianHandler struct {
 }
 
 // --------------------- GET /musicians --------------------- //
-func (handler *MusicianHandler) GetMusicians(response http.ResponseWriter, request *http.Request) {
-	userID, ok := request.Context().Value(middleware.ContextUserIDKey).(string)
+func (handler *MusicianHandler) GetMusicians(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(middleware.ContextUserIDKey).(string)
 	if !ok || userID == "" {
-		http.Error(response, "Unauthorized", http.StatusUnauthorized)
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	query := `
-	SELECT DISTINCT m.id, m.user_id, m.name, m.avatar_path
+	// Получение ID музыкантов, которых должен видеть пользователь
+	musicianQuery := `
+	SELECT DISTINCT m.id, m.user_id, m.name, u.email, u.avatar_path, u.background_path, 
+	       u.description, u.has_complete_setup
 	FROM musician m
 	JOIN musician_genre mg ON m.id = mg.musician_id
 	JOIN user_genre ug ON mg.genre_id = ug.genre_id
+	JOIN user u ON m.user_id = u.id
 	WHERE ug.user_id = ?
 	`
 
-	rows, err := handler.DB.Query(query, userID)
+	rows, err := handler.DB.Query(musicianQuery, userID)
 	if err != nil {
-		http.Error(response, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
 
-	var musicians []models.Musician
+	var musicians []models.MusicianResponse
+
 	for rows.Next() {
-		var m models.Musician
-		if err := rows.Scan(&m.ID, &m.UserID, &m.Name, &m.AvatarPath); err != nil {
-			http.Error(response, err.Error(), http.StatusInternalServerError)
+		var m models.MusicianResponse
+		err := rows.Scan(&m.ID, &m.UserID, &m.Name, &m.Email, &m.AvatarPath, &m.BackgroundPath, &m.Description, &m.HasCompleteSetup)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		// Получаем жанры
+		genreRows, _ := handler.DB.Query(`
+			SELECT g.name
+			FROM genre g
+			JOIN musician_genre mg ON mg.genre_id = g.id
+			WHERE mg.musician_id = ?`, m.ID)
+		for genreRows.Next() {
+			var genre string
+			genreRows.Scan(&genre)
+			m.Genres = append(m.Genres, genre)
+		}
+		genreRows.Close()
+
+		// Получаем соцсети
+		socialRows, _ := handler.DB.Query(`
+			SELECT sn.name, usn.profile_url
+			FROM social_network sn
+			JOIN user_social_network usn ON usn.social_network_id = sn.id
+			WHERE usn.user_id = ?`, m.UserID)
+		for socialRows.Next() {
+			var sl models.SocialLink
+			socialRows.Scan(&sl.Name, &sl.URL)
+			m.SocialLinks = append(m.SocialLinks, sl)
+		}
+		socialRows.Close()
+
+		// Получаем альбомы
+		albumRows, _ := handler.DB.Query(`
+			SELECT a.id, a.title, a.release_date, a.cover_path, a.description
+			FROM album a
+			WHERE a.musician_id = ?`, m.ID)
+		for albumRows.Next() {
+			var album models.AlbumPreview
+			var releaseDate string
+			albumRows.Scan(&album.ID, &album.Title, &releaseDate, &album.CoverUrl, &album.Description)
+
+			// Год релиза
+			if t, err := time.Parse("2006-01-02", releaseDate); err == nil {
+				album.Year = t.Year()
+			}
+
+			// Получаем треки
+			trackRows, _ := handler.DB.Query(`
+				SELECT id FROM track WHERE album_id = ?`, album.ID)
+			for trackRows.Next() {
+				var trackID string
+				trackRows.Scan(&trackID)
+				album.Tracks = append(album.Tracks, trackID)
+			}
+			trackRows.Close()
+
+			m.Albums = append(m.Albums, album)
+		}
+		albumRows.Close()
+
 		musicians = append(musicians, m)
 	}
 
-	response.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(response).Encode(musicians)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(musicians)
 }
 
 // --------------------- POST /user/following --------------------- //
