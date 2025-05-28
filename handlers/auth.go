@@ -168,6 +168,7 @@ func (handler *AuthHandler) Me(response http.ResponseWriter, request *http.Reque
 	err = handler.DB.QueryRow(query, claims.UserID).Scan(
 		&name, &email, &avatarUrl, &backgroundUrl, &description, &hasCompletedSetup)
 	if err != nil {
+		log.Println("UserID from token:", claims.UserID)
 		log.Println("User not found")
 		http.Error(response, "User not found", http.StatusNotFound)
 		return
