@@ -5,11 +5,9 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"strings"
 
 	"github.com/Edafi/MusicVibe/middleware"
 	"github.com/Edafi/MusicVibe/models"
-	"github.com/golang-jwt/jwt/v5"
 )
 
 type HomeHandler struct {
@@ -22,12 +20,7 @@ type AlbumResponse struct {
 }
 
 func (handler *HomeHandler) GetRecommendedTracks(response http.ResponseWriter, request *http.Request) {
-	claims, ok := request.Context().Value("claims").(*Claims)
-	if !ok {
-		log.Println("GetRecommendedTracks:", ok)
-		http.Error(response, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
+	userID := request.Context().Value(middleware.ContextUserIDKey).(string)
 
 	query := `
 		SELECT t.id, t.musician_id, t.title, t.duration, t.file_path, t.stream_count,
@@ -43,7 +36,7 @@ func (handler *HomeHandler) GetRecommendedTracks(response http.ResponseWriter, r
 		LIMIT 50;
 	`
 
-	rows, err := handler.DB.Query(query, claims.UserID)
+	rows, err := handler.DB.Query(query, userID)
 	if err != nil {
 		log.Println("GetRecommendedTracks:", err)
 		http.Error(response, err.Error(), http.StatusInternalServerError)
@@ -70,12 +63,7 @@ func (handler *HomeHandler) GetRecommendedTracks(response http.ResponseWriter, r
 }
 
 func (handler *HomeHandler) GetRecommendedAlbums(response http.ResponseWriter, request *http.Request) {
-	claims, ok := request.Context().Value("claims").(*Claims)
-	if !ok {
-		log.Println("GetRecommendedAlbums:", ok)
-		http.Error(response, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
+	userID := request.Context().Value(middleware.ContextUserIDKey).(string)
 
 	query := `
 		SELECT a.id, a.title, a.musician_id, m.name AS artist_name,
@@ -88,7 +76,7 @@ func (handler *HomeHandler) GetRecommendedAlbums(response http.ResponseWriter, r
 		LIMIT 50;
 	`
 
-	rows, err := handler.DB.Query(query, claims.UserID)
+	rows, err := handler.DB.Query(query, userID)
 	if err != nil {
 		log.Println("GetRecommendedAlbums:", err)
 		http.Error(response, err.Error(), http.StatusInternalServerError)
@@ -153,22 +141,7 @@ func (handler *HomeHandler) GetTrackedTracks(response http.ResponseWriter, reque
 }
 
 func (handler *HomeHandler) GetHomeRecommendedTracks(response http.ResponseWriter, request *http.Request) {
-	authHeader := request.Header.Get("Authorization")
-	if authHeader == "" {
-		http.Error(response, "Missing token", http.StatusUnauthorized)
-		return
-	}
-
-	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-	claims := &Claims{}
-	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-		return jwtKey, nil
-	})
-	if err != nil || !token.Valid {
-		log.Println("GetHomeRecommendedTracks:", err)
-		http.Error(response, "Invalid token", http.StatusUnauthorized)
-		return
-	}
+	userID := request.Context().Value(middleware.ContextUserIDKey).(string)
 
 	query := `
 		SELECT 
@@ -181,7 +154,7 @@ func (handler *HomeHandler) GetHomeRecommendedTracks(response http.ResponseWrite
 		ORDER BY RAND()
 		LIMIT 8;
 	`
-	rows, err := handler.DB.Query(query, claims.UserID)
+	rows, err := handler.DB.Query(query, userID)
 	if err != nil {
 		log.Println("GetHomeRecommendedTracks:", err)
 		http.Error(response, err.Error(), http.StatusInternalServerError)
@@ -205,12 +178,7 @@ func (handler *HomeHandler) GetHomeRecommendedTracks(response http.ResponseWrite
 }
 
 func (handler *HomeHandler) GetHomeRecommendedAlbums(response http.ResponseWriter, request *http.Request) {
-	claims, ok := request.Context().Value("claims").(*Claims)
-	if !ok {
-		log.Println("GetHomeRecommendedAlbums:", ok)
-		http.Error(response, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
+	userID := request.Context().Value(middleware.ContextUserIDKey).(string)
 
 	query := `
 		SELECT a.id, a.title, a.musician_id, m.name AS artist_name,
@@ -223,7 +191,7 @@ func (handler *HomeHandler) GetHomeRecommendedAlbums(response http.ResponseWrite
 		LIMIT 8;
 	`
 
-	rows, err := handler.DB.Query(query, claims.UserID)
+	rows, err := handler.DB.Query(query, userID)
 	if err != nil {
 		log.Println("GetHomeRecommendedAlbums:", err)
 		http.Error(response, err.Error(), http.StatusInternalServerError)
