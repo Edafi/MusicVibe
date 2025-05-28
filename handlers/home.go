@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strings"
 
@@ -23,6 +24,7 @@ type AlbumResponse struct {
 func (handler *HomeHandler) GetRecommendedTracks(response http.ResponseWriter, request *http.Request) {
 	claims, ok := request.Context().Value("claims").(*Claims)
 	if !ok {
+		log.Println("GetRecommendedTracks:", ok)
 		http.Error(response, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -43,6 +45,7 @@ func (handler *HomeHandler) GetRecommendedTracks(response http.ResponseWriter, r
 
 	rows, err := handler.DB.Query(query, claims.UserID)
 	if err != nil {
+		log.Println("GetRecommendedTracks:", err)
 		http.Error(response, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -55,6 +58,7 @@ func (handler *HomeHandler) GetRecommendedTracks(response http.ResponseWriter, r
 			&tr.ID, &tr.ArtistID, &tr.Title, &tr.Duration, &tr.AudioURL, &tr.Plays,
 			&tr.ArtistName, &tr.ImageURL,
 		); err != nil {
+			log.Println("GetRecommendedTracks:", err)
 			http.Error(response, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -68,6 +72,7 @@ func (handler *HomeHandler) GetRecommendedTracks(response http.ResponseWriter, r
 func (handler *HomeHandler) GetRecommendedAlbums(response http.ResponseWriter, request *http.Request) {
 	claims, ok := request.Context().Value("claims").(*Claims)
 	if !ok {
+		log.Println("GetRecommendedAlbums:", ok)
 		http.Error(response, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -85,6 +90,7 @@ func (handler *HomeHandler) GetRecommendedAlbums(response http.ResponseWriter, r
 
 	rows, err := handler.DB.Query(query, claims.UserID)
 	if err != nil {
+		log.Println("GetRecommendedAlbums:", err)
 		http.Error(response, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -97,6 +103,7 @@ func (handler *HomeHandler) GetRecommendedAlbums(response http.ResponseWriter, r
 			&al.ID, &al.Title, &al.ArtistID, &al.ArtistName,
 			&al.CoverUrl, &al.Year, &al.Description,
 		); err != nil {
+			log.Println("GetRecommendedAlbums:", err)
 			http.Error(response, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -122,6 +129,7 @@ func (handler *HomeHandler) GetTrackedTracks(response http.ResponseWriter, reque
 
 	rows, err := handler.DB.Query(query, userID)
 	if err != nil {
+		log.Println("GetTrackedTracks:", err)
 		http.Error(response, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -133,6 +141,7 @@ func (handler *HomeHandler) GetTrackedTracks(response http.ResponseWriter, reque
 		if err := rows.Scan(&tr.ID, &tr.Title, &tr.ArtistID, &tr.ArtistName,
 			&tr.ImageURL, &tr.AudioURL, &tr.Duration, &tr.Plays,
 		); err != nil {
+			log.Println("GetTrackedTracks:", err)
 			http.Error(response, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -156,6 +165,7 @@ func (handler *HomeHandler) GetHomeRecommendedTracks(response http.ResponseWrite
 		return jwtKey, nil
 	})
 	if err != nil || !token.Valid {
+		log.Println("GetHomeRecommendedTracks:", err)
 		http.Error(response, "Invalid token", http.StatusUnauthorized)
 		return
 	}
@@ -173,6 +183,7 @@ func (handler *HomeHandler) GetHomeRecommendedTracks(response http.ResponseWrite
 	`
 	rows, err := handler.DB.Query(query, claims.UserID)
 	if err != nil {
+		log.Println("GetHomeRecommendedTracks:", err)
 		http.Error(response, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -182,6 +193,7 @@ func (handler *HomeHandler) GetHomeRecommendedTracks(response http.ResponseWrite
 	for rows.Next() {
 		var tr models.HomeRecomendedTrack
 		if err := rows.Scan(&tr.ID, &tr.Title, &tr.MusicianID, &tr.MusicianName, &tr.ImageURL, &tr.Plays); err != nil {
+			log.Println("GetHomeRecommendedTracks:", err)
 			http.Error(response, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -195,6 +207,7 @@ func (handler *HomeHandler) GetHomeRecommendedTracks(response http.ResponseWrite
 func (handler *HomeHandler) GetHomeRecommendedAlbums(response http.ResponseWriter, request *http.Request) {
 	claims, ok := request.Context().Value("claims").(*Claims)
 	if !ok {
+		log.Println("GetHomeRecommendedAlbums:", ok)
 		http.Error(response, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -212,6 +225,7 @@ func (handler *HomeHandler) GetHomeRecommendedAlbums(response http.ResponseWrite
 
 	rows, err := handler.DB.Query(query, claims.UserID)
 	if err != nil {
+		log.Println("GetHomeRecommendedAlbums:", err)
 		http.Error(response, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -224,6 +238,7 @@ func (handler *HomeHandler) GetHomeRecommendedAlbums(response http.ResponseWrite
 			&al.ID, &al.Title, &al.ArtistID, &al.ArtistName,
 			&al.CoverUrl, &al.Year, &al.Description,
 		); err != nil {
+			log.Println("GetHomeRecommendedAlbums:", err)
 			http.Error(response, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -250,6 +265,7 @@ func (handler *HomeHandler) GetHomeTrackedTracks(response http.ResponseWriter, r
 
 	rows, err := handler.DB.Query(query, userID)
 	if err != nil {
+		log.Println("GetHomeTrackedTracks:", err)
 		http.Error(response, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -261,6 +277,7 @@ func (handler *HomeHandler) GetHomeTrackedTracks(response http.ResponseWriter, r
 		if err := rows.Scan(&tr.ID, &tr.Title, &tr.ArtistID, &tr.ArtistName,
 			&tr.ImageURL, &tr.AudioURL, &tr.Duration, &tr.Plays,
 		); err != nil {
+			log.Println("GetHomeTrackedTracks:", err)
 			http.Error(response, err.Error(), http.StatusInternalServerError)
 			return
 		}
