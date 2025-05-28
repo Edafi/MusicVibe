@@ -133,6 +133,11 @@ func (handler *MusicianHandler) PostUserFollowing(response http.ResponseWriter, 
 		return
 	}
 
+	if len(payload.MusicianIDs) == 0 {
+		http.Error(response, "No musicians selected", http.StatusBadRequest)
+		return
+	}
+
 	tx, err := handler.DB.Begin()
 	if err != nil {
 		log.Println("Failed to begin transaction:", err)
@@ -150,6 +155,7 @@ func (handler *MusicianHandler) PostUserFollowing(response http.ResponseWriter, 
 	defer stmt.Close()
 
 	for _, musicianID := range payload.MusicianIDs {
+		log.Println("Following musicianID:", musicianID)
 		if _, err := stmt.Exec(userID, musicianID); err != nil {
 			log.Println("Failed to insert follow:", err)
 			http.Error(response, "Failed to insert follow", http.StatusInternalServerError)
