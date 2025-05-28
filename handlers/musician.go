@@ -124,7 +124,7 @@ func (handler *MusicianHandler) PostUserFollowing(response http.ResponseWriter, 
 	}
 
 	var payload struct {
-		MusicianIDs []string `json:"selectedIds"`
+		MusicianIDs []string `json:"musicianIds"`
 	}
 
 	if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
