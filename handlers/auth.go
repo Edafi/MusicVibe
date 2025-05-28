@@ -49,8 +49,8 @@ func (handler *AuthHandler) Register(response http.ResponseWriter, request *http
 	id := uuid.New().String()
 	role := "user"
 
-	query := `INSERT INTO user (id, username, email, passwd_hash, role) VALUES (?, ?, ?, ?, ?)`
-	_, err = handler.DB.Exec(query, id, creds.Username, creds.Email, hashedPassword, role)
+	query := `INSERT INTO user (id, username, email, passwd_hash, role, has_complete_setup) VALUES (?, ?, ?, ?, ?)`
+	_, err = handler.DB.Exec(query, id, creds.Username, creds.Email, hashedPassword, role, false)
 	if err != nil {
 		log.Println("Insert error:", err)
 		http.Error(response, "Error inserting user", http.StatusInternalServerError)
@@ -141,7 +141,7 @@ func (handler *AuthHandler) Login(response http.ResponseWriter, request *http.Re
 func (handler *AuthHandler) Me(response http.ResponseWriter, request *http.Request) {
 	authHeader := request.Header.Get("Authorization")
 	if authHeader == "" {
-		log.Println("Missing token govno o kurwa!!!")
+		log.Println("Missing token")
 		http.Error(response, "Missing token", http.StatusUnauthorized)
 		return
 	}
@@ -153,26 +153,79 @@ func (handler *AuthHandler) Me(response http.ResponseWriter, request *http.Reque
 		return jwtKey, nil
 	})
 	if err != nil || !token.Valid {
-		log.Println("Invalid token ya perdole ki bedle")
+		log.Println("Invalid token")
 		http.Error(response, "Invalid token", http.StatusUnauthorized)
 		return
 	}
 
-	// Достаём данные пользователя по claims.UserID
-	var username, email string
-	query := `SELECT username, email FROM user WHERE id = ?`
-	err = handler.DB.QueryRow(query, claims.UserID).Scan(&username, &email)
+	// Получаем основные поля пользователя
+	var name, email, avatarUrl, backgroundUrl, description string
+	var hasCompletedSetup bool
+	query := `
+		SELECT username, email, avatar_path, background_path, description, has_complete_setup 
+		FROM user
+		WHERE id = ?`
+	err = handler.DB.QueryRow(query, claims.UserID).Scan(
+		&name, &email, &avatarUrl, &backgroundUrl, &description, &hasCompletedSetup)
 	if err != nil {
-		log.Println("Kurwa user is not in blyad db")
+		log.Println("User not found")
 		http.Error(response, "User not found", http.StatusNotFound)
 		return
 	}
 
+	// Получаем жанры пользователя
+	genres := []string{}
+	rows, err := handler.DB.Query(`
+		SELECT g.name
+		FROM genre g
+		JOIN user_genre ug ON g.id = ug.genre_id
+		WHERE ug.user_id = ?`, claims.UserID)
+	if err != nil {
+		log.Println("Genres error:", err)
+	}
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var genre string
+			if err := rows.Scan(&genre); err == nil {
+				genres = append(genres, genre)
+			}
+		}
+	}
+
+	// Получаем соцсети пользователя
+	socialLinks := map[string]string{}
+	socialRows, err := handler.DB.Query(`
+		SELECT sn.name, us.url
+		FROM social_network sn
+		JOIN user_social_network us ON sn.id = us.social_id
+		WHERE us.user_id = ?`, claims.UserID)
+	if err != nil {
+		log.Println("Social_networks error:", err)
+	}
+	if err == nil {
+		defer socialRows.Close()
+		for socialRows.Next() {
+			var name, url string
+			if err := socialRows.Scan(&name, &url); err == nil {
+				socialLinks[name] = url
+			}
+		}
+	}
+
+	// Отправляем ответ
 	response.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(response).Encode(map[string]interface{}{
-		"id":                claims.UserID,
-		"email":             email,
-		"username":          username,
-		"hasCompletedSetup": false,
+		"user": map[string]interface{}{
+			"id":                claims.UserID,
+			"name":              name,
+			"email":             email,
+			"avatarUrl":         avatarUrl,
+			"backgroundUrl":     backgroundUrl,
+			"description":       description,
+			"genres":            genres,
+			"hasCompletedSetup": hasCompletedSetup,
+			"socialLinks":       socialLinks,
+		},
 	})
 }
