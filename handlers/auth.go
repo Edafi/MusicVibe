@@ -213,7 +213,7 @@ func (handler *AuthHandler) Me(response http.ResponseWriter, request *http.Reque
 	// Социальные сети
 	socialLinks := map[string]string{}
 	socialRows, err := handler.DB.Query(`
-		SELECT sn.name, us.url
+		SELECT sn.name, us.profile_url
 		FROM social_network sn
 		JOIN user_social_network us ON sn.id = us.social_id
 		WHERE us.user_id = ?`, claims.UserID)
