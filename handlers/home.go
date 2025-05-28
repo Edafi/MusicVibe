@@ -140,7 +140,7 @@ func (handler *HomeHandler) GetTrackedTracks(response http.ResponseWriter, reque
 	}
 	defer rows.Close()
 
-	var tracks []models.RecommendedTrack
+	tracks := make([]models.RecommendedTrack, 0)
 	for rows.Next() {
 		var tr models.RecommendedTrack
 		if err := rows.Scan(&tr.ID, &tr.Title, &tr.ArtistID, &tr.ArtistName,
@@ -272,7 +272,7 @@ func (handler *HomeHandler) GetHomeTrackedTracks(response http.ResponseWriter, r
 	}
 	defer rows.Close()
 
-	var tracks []models.RecommendedTrack
+	tracks := make([]models.RecommendedTrack, 0)
 	for rows.Next() {
 		var tr models.RecommendedTrack
 		if err := rows.Scan(&tr.ID, &tr.Title, &tr.ArtistID, &tr.ArtistName,
