@@ -46,8 +46,8 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	secured.HandleFunc("/tracks/recommended", homeHandler.GetRecommendedTracks).Methods("GET")
 	secured.HandleFunc("/albums/recommended", homeHandler.GetRecommendedAlbums).Methods("GET")
 	secured.HandleFunc("/tracks/tracked", homeHandler.GetTrackedTracks).Methods("GET")
-	secured.HandleFunc("/home/tracks/recomended", homeHandler.GetHomeRecommendedTracks).Methods("GET")
-	secured.HandleFunc("/home/albums/recomended", homeHandler.GetHomeRecommendedTracks).Methods("GET")
+	secured.HandleFunc("/home/tracks/recommended", homeHandler.GetHomeRecommendedTracks).Methods("GET")
+	secured.HandleFunc("/home/albums/recommended", homeHandler.GetHomeRecommendedTracks).Methods("GET")
 	secured.HandleFunc("/home/tracks/tracked", homeHandler.GetHomeRecommendedTracks).Methods("GET")
 
 	trackHandler := &handlers.SearchHandler{DB: db}
