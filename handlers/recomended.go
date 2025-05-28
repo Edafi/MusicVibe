@@ -14,42 +14,34 @@ type RecommendHandler struct {
 }
 
 // GET /tracks/recommended
-func (h *RecommendHandler) GetRecommendedTracks(response http.ResponseWriter, request *http.Request) {
+func (handler *RecommendHandler) GetRecommendedTracks(response http.ResponseWriter, request *http.Request) {
 	userID := request.Context().Value(middleware.ContextUserIDKey).(string)
 
 	query := `
 	SELECT 
-		t.id, t.musician_id, t.album_id, t.title, t.duration,
-		t.file_path, t.genre_id, t.stream_count, t.visibility,
-		a.cover_path,
-		m.name AS musician_name
+		t.id, t.title, t.musician_id, m.name, 
+		a.cover_path, t.file_path, t.duration, t.stream_count
 	FROM track t
 	JOIN album a ON t.album_id = a.id
 	JOIN musician m ON t.musician_id = m.id
-	JOIN user_genres ug ON t.genre_id = ug.genre_id
+	JOIN user_genre ug ON t.genre_id = ug.genre_id
 	WHERE ug.user_id = ?
 	`
 
-	rows, err := h.DB.Query(query, userID)
+	rows, err := handler.DB.Query(query, userID)
 	if err != nil {
 		http.Error(response, "Database query error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
 
-	type RecommendedTrack struct {
-		models.Track
-		CoverPath    string `json:"cover_path"`
-		MusicianName string `json:"musician_name"`
-	}
+	var tracks []models.RecommendedTrack
 
-	var tracks []RecommendedTrack
 	for rows.Next() {
-		var t RecommendedTrack
+		var t models.RecommendedTrack
 		err := rows.Scan(
-			&t.ID, &t.MusicianID, &t.AlbumID, &t.Title, &t.Duration,
-			&t.FilePath, &t.GenreID, &t.StreamCount, &t.Visibility,
-			&t.CoverPath, &t.MusicianName,
+			&t.ID, &t.Title, &t.ArtistID, &t.ArtistName,
+			&t.ImageURL, &t.AudioURL, &t.Duration, &t.Plays,
 		)
 		if err != nil {
 			http.Error(response, "Scan error: "+err.Error(), http.StatusInternalServerError)
@@ -62,8 +54,8 @@ func (h *RecommendHandler) GetRecommendedTracks(response http.ResponseWriter, re
 	json.NewEncoder(response).Encode(tracks)
 }
 
-func (h *RecommendHandler) GetRecommendedAlbums(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(middleware.ContextUserIDKey).(string)
+func (handler *RecommendHandler) GetRecommendedAlbums(response http.ResponseWriter, request *http.Request) {
+	userID := request.Context().Value(middleware.ContextUserIDKey).(string)
 
 	query := `
 	SELECT 
@@ -76,9 +68,9 @@ func (h *RecommendHandler) GetRecommendedAlbums(w http.ResponseWriter, r *http.R
 	WHERE ug.user_id = ?
 	`
 
-	rows, err := h.DB.Query(query, userID)
+	rows, err := handler.DB.Query(query, userID)
 	if err != nil {
-		http.Error(w, "Database query error: "+err.Error(), http.StatusInternalServerError)
+		http.Error(response, "Database query error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
@@ -97,12 +89,12 @@ func (h *RecommendHandler) GetRecommendedAlbums(w http.ResponseWriter, r *http.R
 			&a.MusicianName,
 		)
 		if err != nil {
-			http.Error(w, "Scan error: "+err.Error(), http.StatusInternalServerError)
+			http.Error(response, "Scan error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 		albums = append(albums, a)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(albums)
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(albums)
 }

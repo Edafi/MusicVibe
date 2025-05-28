@@ -17,3 +17,14 @@ type TrackResponse struct {
 	Artist    string `json:"artist"`
 	CoverPath string `json:"cover_path"`
 }
+
+type RecommendedTrack struct {
+	ID         string `json:"id"`
+	Title      string `json:"title"`
+	ArtistID   string `json:"artistId"`
+	ArtistName string `json:"artistName"`
+	ImageURL   string `json:"imageUrl"`
+	AudioURL   string `json:"audioUrl"`
+	Duration   int    `json:"duration"`
+	Plays      int    `json:"plays"`
+}
