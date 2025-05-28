@@ -215,7 +215,7 @@ func (handler *AuthHandler) Me(response http.ResponseWriter, request *http.Reque
 	socialRows, err := handler.DB.Query(`
 		SELECT sn.name, us.profile_url
 		FROM social_network sn
-		JOIN user_social_network us ON sn.id = us.social_id
+		JOIN user_social_network us ON sn.id = us.social_network_id
 		WHERE us.user_id = ?`, claims.UserID)
 	if err == nil {
 		defer socialRows.Close()
