@@ -234,7 +234,7 @@ func (handler *AuthHandler) Me(response http.ResponseWriter, request *http.Reque
 	json.NewEncoder(response).Encode(map[string]interface{}{
 		"user": map[string]interface{}{
 			"id":                claims.UserID,
-			"name":              name,
+			"username":          name,
 			"email":             email,
 			"avatarUrl":         avatarPath,
 			"backgroundUrl":     bgPath,
