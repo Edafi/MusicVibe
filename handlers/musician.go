@@ -157,11 +157,6 @@ func (handler *MusicianHandler) PostUserFollowing(response http.ResponseWriter, 
 		}
 	}
 
-	if err := tx.Commit(); err != nil {
-		log.Println("Failed to commit transaction:", err)
-		http.Error(response, "Failed to commit transaction", http.StatusInternalServerError)
-		return
-	}
 	updateStmt, err := tx.Prepare("UPDATE user SET has_complete_setup = 1 WHERE id = ?")
 
 	if err != nil {
@@ -176,6 +171,13 @@ func (handler *MusicianHandler) PostUserFollowing(response http.ResponseWriter, 
 		http.Error(response, "Failed to update user setup", http.StatusInternalServerError)
 		return
 	}
+
+	if err := tx.Commit(); err != nil {
+		log.Println("Failed to commit transaction:", err)
+		http.Error(response, "Failed to commit transaction", http.StatusInternalServerError)
+		return
+	}
+
 	response.WriteHeader(http.StatusCreated)
 }
 
