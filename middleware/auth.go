@@ -50,7 +50,6 @@ func JWTMiddleware(next http.Handler) http.Handler {
 		}
 
 		ctx := context.WithValue(request.Context(), ContextUserIDKey, userID)
-		log.Println("JWTMiddleware: Authorized userID =", userID)
 		next.ServeHTTP(response, request.WithContext(ctx))
 	})
 }
