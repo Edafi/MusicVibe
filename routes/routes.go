@@ -40,7 +40,7 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	authHandler := &handlers.AuthHandler{DB: db}
 	router.HandleFunc("/register", authHandler.Register).Methods("POST")
 	router.HandleFunc("/login", authHandler.Login).Methods("POST")
-	router.HandleFunc("/auth/me", authHandler.Me).Methods("GET")
+	secured.HandleFunc("/auth/me", authHandler.Me).Methods("GET")
 
 	homeHandler := &handlers.HomeHandler{DB: db}
 	secured.HandleFunc("/tracks/recommended", homeHandler.GetRecommendedTracks).Methods("GET")
