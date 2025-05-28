@@ -20,7 +20,13 @@ type AlbumResponse struct {
 }
 
 func (handler *HomeHandler) GetRecommendedTracks(response http.ResponseWriter, request *http.Request) {
-	userID := request.Context().Value(middleware.ContextUserIDKey).(string)
+	val := request.Context().Value(middleware.ContextUserIDKey)
+	userID, ok := val.(string)
+	if !ok {
+		log.Println("UserID not found in context")
+		http.Error(response, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
 	query := `
 		SELECT t.id, t.musician_id, t.title, t.duration, t.file_path, t.stream_count,
@@ -63,7 +69,13 @@ func (handler *HomeHandler) GetRecommendedTracks(response http.ResponseWriter, r
 }
 
 func (handler *HomeHandler) GetRecommendedAlbums(response http.ResponseWriter, request *http.Request) {
-	userID := request.Context().Value(middleware.ContextUserIDKey).(string)
+	val := request.Context().Value(middleware.ContextUserIDKey)
+	userID, ok := val.(string)
+	if !ok {
+		log.Println("UserID not found in context")
+		http.Error(response, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
 	query := `
 		SELECT a.id, a.title, a.musician_id, m.name AS artist_name,
@@ -103,8 +115,13 @@ func (handler *HomeHandler) GetRecommendedAlbums(response http.ResponseWriter, r
 }
 
 func (handler *HomeHandler) GetTrackedTracks(response http.ResponseWriter, request *http.Request) {
-	userID := request.Context().Value(middleware.ContextUserIDKey).(string)
-
+	val := request.Context().Value(middleware.ContextUserIDKey)
+	userID, ok := val.(string)
+	if !ok {
+		log.Println("UserID not found in context")
+		http.Error(response, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 	query := `
 		SELECT t.id, t.title, t.musician_id, m.name AS artist_name, a.cover_path,
 		t.file_path, t.duration, t.stream_count
@@ -141,8 +158,13 @@ func (handler *HomeHandler) GetTrackedTracks(response http.ResponseWriter, reque
 }
 
 func (handler *HomeHandler) GetHomeRecommendedTracks(response http.ResponseWriter, request *http.Request) {
-	userID := request.Context().Value(middleware.ContextUserIDKey).(string)
-
+	val := request.Context().Value(middleware.ContextUserIDKey)
+	userID, ok := val.(string)
+	if !ok {
+		log.Println("UserID not found in context")
+		http.Error(response, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 	query := `
 		SELECT 
 		t.id, t.title, t.musician_id, m.name AS artist_name, a.cover_path, t.stream_count
@@ -178,8 +200,13 @@ func (handler *HomeHandler) GetHomeRecommendedTracks(response http.ResponseWrite
 }
 
 func (handler *HomeHandler) GetHomeRecommendedAlbums(response http.ResponseWriter, request *http.Request) {
-	userID := request.Context().Value(middleware.ContextUserIDKey).(string)
-
+	val := request.Context().Value(middleware.ContextUserIDKey)
+	userID, ok := val.(string)
+	if !ok {
+		log.Println("UserID not found in context")
+		http.Error(response, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 	query := `
 		SELECT a.id, a.title, a.musician_id, m.name AS artist_name,
 		a.cover_path, YEAR(a.release_date), a.description
@@ -218,7 +245,13 @@ func (handler *HomeHandler) GetHomeRecommendedAlbums(response http.ResponseWrite
 }
 
 func (handler *HomeHandler) GetHomeTrackedTracks(response http.ResponseWriter, request *http.Request) {
-	userID := request.Context().Value(middleware.ContextUserIDKey).(string)
+	val := request.Context().Value(middleware.ContextUserIDKey)
+	userID, ok := val.(string)
+	if !ok {
+		log.Println("UserID not found in context")
+		http.Error(response, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
 	query := `
 		SELECT t.id, t.title, t.musician_id, m.name AS artist_name, a.cover_path,
