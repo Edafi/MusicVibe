@@ -184,10 +184,11 @@ func (handler *HomeHandler) GetHomeRecommendedTracks(response http.ResponseWrite
 	}
 	defer rows.Close()
 
-	var tracks []models.HomeRecomendedTrack
+	var tracks []models.RecommendedTrack
 	for rows.Next() {
-		var tr models.HomeRecomendedTrack
-		if err := rows.Scan(&tr.ID, &tr.Title, &tr.MusicianID, &tr.MusicianName, &tr.ImageURL, &tr.Plays); err != nil {
+		var tr models.RecommendedTrack
+		if err := rows.Scan(&tr.ID, &tr.ArtistID, &tr.Title, &tr.Duration, &tr.AudioURL, &tr.Plays,
+			&tr.ArtistName, &tr.ImageURL); err != nil {
 			log.Println("GetHomeRecommendedTracks:", err)
 			http.Error(response, err.Error(), http.StatusInternalServerError)
 			return
