@@ -166,14 +166,14 @@ func (handler *HomeHandler) GetHomeRecommendedTracks(response http.ResponseWrite
 		return
 	}
 	query := `
-		SELECT t.id, t.musician_id, t.title, t.duration, t.file_path, t.stream_count,
-		m.name AS artist, a.cover_path, t.visibility
-		FROM track t
+		SELECT 
+		t.id, t.title, t.musician_id, m.name AS artist_name, a.cover_path,
+		t.file_path, t.duration, t.stream_count, t.visibility
 		JOIN album a ON t.album_id = a.id
 		JOIN musician m ON t.musician_id = m.id
 		JOIN musician_genre mg ON m.id = mg.musician_id
 		JOIN user_genre ug ON mg.genre_id = ug.genre_id
-		WHERE ug.user_id = ? and t.visibility = 'public'
+		WHERE t.visibility = 'public' and ug.user_id = ?
 		GROUP BY t.id
 		ORDER BY RAND()
 		LIMIT 8;
