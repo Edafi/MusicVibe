@@ -123,7 +123,7 @@ func (handler *HomeHandler) GetTrackedTracks(response http.ResponseWriter, reque
 	}
 	query := `
 		SELECT t.id, t.title, t.musician_id, m.name AS artist_name, a.cover_path,
-		t.file_path, t.duration, t.stream_count,  t.visibility
+		t.file_path, t.duration, t.stream_count, t.visibility
 		FROM liked_tracks lt
 		JOIN track t ON lt.track_id = t.id
 		JOIN album a ON t.album_id = a.id
