@@ -280,8 +280,8 @@ func (handler *HomeHandler) GetHomeTrackedTracks(response http.ResponseWriter, r
 	for rows.Next() {
 		var tr models.TrackResponse
 		if err := rows.Scan(
-			&tr.ID, &tr.Title, &tr.ArtistID, &tr.Duration, &tr.AudioURL, &tr.Plays,
-			&tr.ArtistName, &tr.ImageURL, &tr.Visibility,
+			&tr.ID, &tr.Title, &tr.ArtistID, &tr.ArtistName, &tr.ImageURL, &tr.AudioURL,
+			&tr.Duration, &tr.Plays, &tr.Visibility,
 		); err != nil {
 			log.Println("GetHomeTrackedTracks:", err)
 			http.Error(response, err.Error(), http.StatusInternalServerError)
