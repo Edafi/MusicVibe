@@ -50,8 +50,8 @@ func (handler *SearchHandler) GetNewTracks(response http.ResponseWriter, request
 func (handler *SearchHandler) GetChartTracks(response http.ResponseWriter, request *http.Request) {
 	query := `
 	SELECT t.id, t.musician_id, t.album_id, t.title, t.duration, t.file_path,
-	       t.genre_id, t.stream_count,
-	       m.name AS artist, a.cover_path, t.visibility,
+	t.genre_id, t.stream_count,
+	m.name AS artist, a.cover_path, t.visibility,
 	FROM track t
 	JOIN musician m ON t.musician_id = m.id
 	LEFT JOIN album a ON t.album_id = a.id
@@ -91,8 +91,8 @@ func (handler *SearchHandler) SearchTracks(response http.ResponseWriter, request
 
 	query := `
 	SELECT t.id, t.musician_id, t.album_id, t.title, t.duration, t.file_path,
-	       t.genre_id, t.stream_count,
-	       m.name AS artist, a.cover_path, t.visibility,
+	t.genre_id, t.stream_count,
+	m.name AS artist, a.cover_path, t.visibility,
 	FROM track t
 	JOIN musician m ON t.musician_id = m.id
 	LEFT JOIN album a ON t.album_id = a.id
