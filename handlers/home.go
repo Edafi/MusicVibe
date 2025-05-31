@@ -29,14 +29,14 @@ func (handler *HomeHandler) GetRecommendedTracks(response http.ResponseWriter, r
 	}
 
 	query := `
-		SELECT t.id, t.musician_id, t.title, t.duration, t.file_path, t.stream_count,
+		SELECT t.id, t.musician_id, t.title, t.duration, t.file_path, t.stream_count, t.visibility,
 		m.name AS artist, a.cover_path
 		FROM track t
 		JOIN album a ON t.album_id = a.id
 		JOIN musician m ON t.musician_id = m.id
 		JOIN musician_genre mg ON m.id = mg.musician_id
 		JOIN user_genre ug ON mg.genre_id = ug.genre_id
-		WHERE ug.user_id = ?
+		WHERE ug.user_id = ? and t.visibility = public
 		GROUP BY t.id
 		ORDER BY RAND()
 		LIMIT 50;
@@ -50,9 +50,9 @@ func (handler *HomeHandler) GetRecommendedTracks(response http.ResponseWriter, r
 	}
 	defer rows.Close()
 
-	var tracks []models.RecommendedTrack
+	tracks := make([]models.TrackResponse, 0)
 	for rows.Next() {
-		var tr models.RecommendedTrack
+		var tr models.TrackResponse
 		if err := rows.Scan(
 			&tr.ID, &tr.ArtistID, &tr.Title, &tr.Duration, &tr.AudioURL, &tr.Plays,
 			&tr.ArtistName, &tr.ImageURL,
@@ -95,8 +95,7 @@ func (handler *HomeHandler) GetRecommendedAlbums(response http.ResponseWriter, r
 		return
 	}
 	defer rows.Close()
-
-	var albums []models.RecommendedAlbum
+	var albums []models.RecommendedAlbum = make([]models.RecommendedAlbum, 0)
 	for rows.Next() {
 		var al models.RecommendedAlbum
 		if err := rows.Scan(
@@ -123,13 +122,13 @@ func (handler *HomeHandler) GetTrackedTracks(response http.ResponseWriter, reque
 		return
 	}
 	query := `
-		SELECT t.id, t.title, t.musician_id, m.name AS artist_name, a.cover_path,
+		SELECT t.id, t.title, t.musician_id, m.name AS artist_name, a.cover_path, t.visibility
 		t.file_path, t.duration, t.stream_count
 		FROM liked_tracks lt
 		JOIN track t ON lt.track_id = t.id
 		JOIN album a ON t.album_id = a.id
 		JOIN musician m ON t.musician_id = m.id
-		WHERE lt.user_id = ?
+		WHERE lt.user_id = ? and t.visibility = public
 	`
 
 	rows, err := handler.DB.Query(query, userID)
@@ -140,9 +139,9 @@ func (handler *HomeHandler) GetTrackedTracks(response http.ResponseWriter, reque
 	}
 	defer rows.Close()
 
-	tracks := make([]models.RecommendedTrack, 0)
+	tracks := make([]models.TrackResponse, 0)
 	for rows.Next() {
-		var tr models.RecommendedTrack
+		var tr models.TrackResponse
 		if err := rows.Scan(&tr.ID, &tr.Title, &tr.ArtistID, &tr.ArtistName,
 			&tr.ImageURL, &tr.AudioURL, &tr.Duration, &tr.Plays,
 		); err != nil {
@@ -166,14 +165,14 @@ func (handler *HomeHandler) GetHomeRecommendedTracks(response http.ResponseWrite
 		return
 	}
 	query := `
-		SELECT t.id, t.musician_id, t.title, t.duration, t.file_path, t.stream_count,
+		SELECT t.id, t.musician_id, t.title, t.duration, t.file_path, t.stream_count, t.visibility,
 		m.name AS artist, a.cover_path
 		FROM track t
 		JOIN album a ON t.album_id = a.id
 		JOIN musician m ON t.musician_id = m.id
 		JOIN musician_genre mg ON m.id = mg.musician_id
 		JOIN user_genre ug ON mg.genre_id = ug.genre_id
-		WHERE ug.user_id = ?
+		WHERE ug.user_id = ? and t.visibility = public
 		GROUP BY t.id
 		ORDER BY RAND()
 		LIMIT 8;
@@ -185,10 +184,9 @@ func (handler *HomeHandler) GetHomeRecommendedTracks(response http.ResponseWrite
 		return
 	}
 	defer rows.Close()
-
-	var tracks []models.RecommendedTrack
+	var tracks []models.TrackResponse = make([]models.TrackResponse, 0)
 	for rows.Next() {
-		var tr models.RecommendedTrack
+		var tr models.TrackResponse
 		if err := rows.Scan(&tr.ID, &tr.ArtistID, &tr.Title, &tr.Duration, &tr.AudioURL, &tr.Plays,
 			&tr.ArtistName, &tr.ImageURL); err != nil {
 			log.Println("GetHomeRecommendedTracks:", err)
@@ -229,7 +227,7 @@ func (handler *HomeHandler) GetHomeRecommendedAlbums(response http.ResponseWrite
 	}
 	defer rows.Close()
 
-	var albums []models.RecommendedAlbum
+	var albums []models.RecommendedAlbum = make([]models.RecommendedAlbum, 0)
 	for rows.Next() {
 		var al models.RecommendedAlbum
 		if err := rows.Scan(
@@ -258,12 +256,12 @@ func (handler *HomeHandler) GetHomeTrackedTracks(response http.ResponseWriter, r
 
 	query := `
 		SELECT t.id, t.title, t.musician_id, m.name AS artist_name, a.cover_path,
-		t.file_path, t.duration, t.stream_count
+		t.file_path, t.duration, t.stream_count, t.visibility
 		FROM liked_tracks lt
 		JOIN track t ON lt.track_id = t.id
 		JOIN album a ON t.album_id = a.id
 		JOIN musician m ON t.musician_id = m.id
-		WHERE lt.user_id = ?
+		WHERE lt.user_id = ? and t.visibility = public
 		LIMIT 8
 	`
 
@@ -275,9 +273,9 @@ func (handler *HomeHandler) GetHomeTrackedTracks(response http.ResponseWriter, r
 	}
 	defer rows.Close()
 
-	tracks := make([]models.RecommendedTrack, 0)
+	var tracks []models.TrackResponse = make([]models.TrackResponse, 0)
 	for rows.Next() {
-		var tr models.RecommendedTrack
+		var tr models.TrackResponse
 		if err := rows.Scan(&tr.ID, &tr.Title, &tr.ArtistID, &tr.ArtistName,
 			&tr.ImageURL, &tr.AudioURL, &tr.Duration, &tr.Plays,
 		); err != nil {

@@ -35,9 +35,8 @@ func (handler *SearchHandler) GetNewTracks(response http.ResponseWriter, request
 	for rows.Next() {
 		var tr models.TrackResponse
 		if err := rows.Scan(
-			&tr.ID, &tr.MusicianID, &tr.AlbumID, &tr.Title, &tr.Duration,
-			&tr.FilePath, &tr.GenreID, &tr.StreamCount, &tr.Visibility,
-			&tr.Artist, &tr.CoverPath,
+			&tr.ID, &tr.Title, &tr.ArtistID, &tr.ArtistName,
+			&tr.ImageURL, &tr.AudioURL, &tr.Duration, &tr.Plays,
 		); err != nil {
 			http.Error(response, err.Error(), http.StatusInternalServerError)
 			return
@@ -70,9 +69,8 @@ func (handler *SearchHandler) GetChartTracks(response http.ResponseWriter, reque
 	for rows.Next() {
 		var tr models.TrackResponse
 		if err := rows.Scan(
-			&tr.ID, &tr.MusicianID, &tr.AlbumID, &tr.Title, &tr.Duration,
-			&tr.FilePath, &tr.GenreID, &tr.StreamCount, &tr.Visibility,
-			&tr.Artist, &tr.CoverPath,
+			&tr.ID, &tr.Title, &tr.ArtistID, &tr.ArtistName,
+			&tr.ImageURL, &tr.AudioURL, &tr.Duration, &tr.Plays,
 		); err != nil {
 			http.Error(response, err.Error(), http.StatusInternalServerError)
 			return
@@ -112,9 +110,8 @@ func (handler *SearchHandler) SearchTracks(response http.ResponseWriter, request
 	for rows.Next() {
 		var tr models.TrackResponse
 		if err := rows.Scan(
-			&tr.ID, &tr.MusicianID, &tr.AlbumID, &tr.Title, &tr.Duration,
-			&tr.FilePath, &tr.GenreID, &tr.StreamCount, &tr.Visibility,
-			&tr.Artist, &tr.CoverPath,
+			&tr.ID, &tr.Title, &tr.ArtistID, &tr.ArtistName,
+			&tr.ImageURL, &tr.AudioURL, &tr.Duration, &tr.Plays,
 		); err != nil {
 			http.Error(response, err.Error(), http.StatusInternalServerError)
 			return

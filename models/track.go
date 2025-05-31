@@ -1,8 +1,9 @@
 package models
 
+// TODO: Добавить путь до альбома трека
 type Track struct {
 	ID          string `json:"id"`
-	MusicianID  string `json:"musician_id"`
+	MusicianID  string `json:"artistId"`
 	AlbumID     string `json:"album_id"`
 	Title       string `json:"title"`
 	Duration    int    `json:"duration"`
@@ -13,15 +14,9 @@ type Track struct {
 }
 
 type TrackResponse struct {
-	Track
-	Artist    string `json:"artist"`
-	CoverPath string `json:"cover_path"`
-}
-
-type RecommendedTrack struct {
-	ID         string `json:"id"`
+	ID         int    `json:"id"`
 	Title      string `json:"title"`
-	ArtistID   string `json:"artistId"`
+	ArtistID   int    `json:"artistId"`
 	ArtistName string `json:"artistName"`
 	ImageURL   string `json:"imageUrl"`
 	AudioURL   string `json:"audioUrl"`
