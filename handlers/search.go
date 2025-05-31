@@ -16,14 +16,14 @@ type SearchHandler struct {
 
 func (handler *SearchHandler) GetNewTracks(response http.ResponseWriter, request *http.Request) {
 	query := `
-	SELECT t.id, t.musician_id, t.album_id, t.title, t.duration, t.file_path,
-	t.genre_id, t.stream_count,
-	m.name AS artist, a.cover_path, t.visibility,
+	SELECT 
+	t.id, t.musician_id, t.title, t.duration, t.file_path,
+	t.stream_count, m.name AS artist, a.cover_path, t.visibility
 	FROM track t
 	JOIN musician m ON t.musician_id = m.id
 	LEFT JOIN album a ON t.album_id = a.id
-	ORDER BY t.id DESC
 	WHERE t.visibility = 'public'
+	ORDER BY a.release_date DESC
 	LIMIT 8;
 	`
 
@@ -53,14 +53,14 @@ func (handler *SearchHandler) GetNewTracks(response http.ResponseWriter, request
 
 func (handler *SearchHandler) GetChartTracks(response http.ResponseWriter, request *http.Request) {
 	query := `
-	SELECT t.id, t.musician_id, t.album_id, t.title, t.duration, t.file_path,
-	t.genre_id, t.stream_count,
-	m.name AS artist, a.cover_path, t.visibility,
+	SELECT 
+	t.id, t.musician_id, t.title, t.duration, t.file_path,
+	t.stream_count, m.name AS artist, a.cover_path, t.visibility
 	FROM track t
 	JOIN musician m ON t.musician_id = m.id
 	LEFT JOIN album a ON t.album_id = a.id
-	ORDER BY t.stream_count DESC
 	WHERE t.visibility = 'public'
+	ORDER BY t.stream_count DESC
 	LIMIT 8;
 	`
 
