@@ -169,6 +169,7 @@ func (handler *HomeHandler) GetHomeRecommendedTracks(response http.ResponseWrite
 		SELECT 
 		t.id, t.title, t.musician_id, m.name AS artist_name, a.cover_path,
 		t.file_path, t.duration, t.stream_count, t.visibility
+		FROM track t
 		JOIN album a ON t.album_id = a.id
 		JOIN musician m ON t.musician_id = m.id
 		JOIN musician_genre mg ON m.id = mg.musician_id
