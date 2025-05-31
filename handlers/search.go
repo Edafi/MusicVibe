@@ -32,9 +32,9 @@ func (handler *SearchHandler) GetNewTracks(response http.ResponseWriter, request
 	}
 	defer rows.Close()
 
-	var tracks []models.Track
+	var tracks []models.TrackResponse = make([]models.TrackResponse, 0)
 	for rows.Next() {
-		var tr models.Track
+		var tr models.TrackResponse
 		if err := rows.Scan(
 			&tr.ID, &tr.ArtistID, &tr.Title, &tr.Duration, &tr.AudioURL, &tr.Plays,
 			&tr.ArtistName, &tr.ImageURL, &tr.Visibility,
@@ -67,9 +67,9 @@ func (handler *SearchHandler) GetChartTracks(response http.ResponseWriter, reque
 	}
 	defer rows.Close()
 
-	var tracks []models.Track
+	var tracks []models.TrackResponse = make([]models.TrackResponse, 0)
 	for rows.Next() {
-		var tr models.Track
+		var tr models.TrackResponse
 		if err := rows.Scan(
 			&tr.ID, &tr.ArtistID, &tr.Title, &tr.Duration, &tr.AudioURL, &tr.Plays,
 			&tr.ArtistName, &tr.ImageURL, &tr.Visibility,
@@ -108,9 +108,9 @@ func (handler *SearchHandler) SearchTracks(response http.ResponseWriter, request
 	}
 	defer rows.Close()
 
-	var tracks []models.Track
+	var tracks []models.TrackResponse = make([]models.TrackResponse, 0)
 	for rows.Next() {
-		var tr models.Track
+		var tr models.TrackResponse
 		if err := rows.Scan(
 			&tr.ID, &tr.ArtistID, &tr.Title, &tr.Duration, &tr.AudioURL, &tr.Plays,
 			&tr.ArtistName, &tr.ImageURL, &tr.Visibility,

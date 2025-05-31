@@ -50,9 +50,9 @@ func (handler *HomeHandler) GetRecommendedTracks(response http.ResponseWriter, r
 	}
 	defer rows.Close()
 
-	tracks := make([]models.Track, 0)
+	var tracks []models.TrackResponse = make([]models.TrackResponse, 0)
 	for rows.Next() {
-		var tr models.Track
+		var tr models.TrackResponse
 		if err := rows.Scan(
 			&tr.ID, &tr.ArtistID, &tr.Title, &tr.Duration, &tr.AudioURL, &tr.Plays,
 			&tr.ArtistName, &tr.ImageURL, &tr.Visibility,
@@ -139,9 +139,9 @@ func (handler *HomeHandler) GetTrackedTracks(response http.ResponseWriter, reque
 	}
 	defer rows.Close()
 
-	tracks := make([]models.Track, 0)
+	var tracks []models.TrackResponse = make([]models.TrackResponse, 0)
 	for rows.Next() {
-		var tr models.Track
+		var tr models.TrackResponse
 		if err := rows.Scan(
 			&tr.ID, &tr.ArtistID, &tr.Title, &tr.Duration, &tr.AudioURL, &tr.Plays,
 			&tr.ArtistName, &tr.ImageURL, &tr.Visibility,
@@ -185,9 +185,9 @@ func (handler *HomeHandler) GetHomeRecommendedTracks(response http.ResponseWrite
 		return
 	}
 	defer rows.Close()
-	var tracks []models.Track = make([]models.Track, 0)
+	var tracks []models.TrackResponse = make([]models.TrackResponse, 0)
 	for rows.Next() {
-		var tr models.Track
+		var tr models.TrackResponse
 		if err := rows.Scan(
 			&tr.ID, &tr.ArtistID, &tr.Title, &tr.Duration, &tr.AudioURL, &tr.Plays,
 			&tr.ArtistName, &tr.ImageURL, &tr.Visibility,
@@ -276,9 +276,9 @@ func (handler *HomeHandler) GetHomeTrackedTracks(response http.ResponseWriter, r
 	}
 	defer rows.Close()
 
-	var tracks []models.Track = make([]models.Track, 0)
+	var tracks []models.TrackResponse = make([]models.TrackResponse, 0)
 	for rows.Next() {
-		var tr models.Track
+		var tr models.TrackResponse
 		if err := rows.Scan(
 			&tr.ID, &tr.ArtistID, &tr.Title, &tr.Duration, &tr.AudioURL, &tr.Plays,
 			&tr.ArtistName, &tr.ImageURL, &tr.Visibility,
