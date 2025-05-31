@@ -36,7 +36,7 @@ func (handler *HomeHandler) GetRecommendedTracks(response http.ResponseWriter, r
 		JOIN musician m ON t.musician_id = m.id
 		JOIN musician_genre mg ON m.id = mg.musician_id
 		JOIN user_genre ug ON mg.genre_id = ug.genre_id
-		WHERE ug.user_id = ? and t.visibility = public
+		WHERE ug.user_id = ? and t.visibility = 'public'
 		GROUP BY t.id
 		ORDER BY RAND()
 		LIMIT 50;
@@ -128,7 +128,7 @@ func (handler *HomeHandler) GetTrackedTracks(response http.ResponseWriter, reque
 		JOIN track t ON lt.track_id = t.id
 		JOIN album a ON t.album_id = a.id
 		JOIN musician m ON t.musician_id = m.id
-		WHERE lt.user_id = ? and t.visibility = public
+		WHERE lt.user_id = ? and t.visibility = 'public'
 	`
 
 	rows, err := handler.DB.Query(query, userID)
@@ -172,7 +172,7 @@ func (handler *HomeHandler) GetHomeRecommendedTracks(response http.ResponseWrite
 		JOIN musician m ON t.musician_id = m.id
 		JOIN musician_genre mg ON m.id = mg.musician_id
 		JOIN user_genre ug ON mg.genre_id = ug.genre_id
-		WHERE ug.user_id = ? and t.visibility = public
+		WHERE ug.user_id = ? and t.visibility = 'public'
 		GROUP BY t.id
 		ORDER BY RAND()
 		LIMIT 8;
@@ -261,7 +261,7 @@ func (handler *HomeHandler) GetHomeTrackedTracks(response http.ResponseWriter, r
 		JOIN track t ON lt.track_id = t.id
 		JOIN album a ON t.album_id = a.id
 		JOIN musician m ON t.musician_id = m.id
-		WHERE lt.user_id = ? and t.visibility = public
+		WHERE lt.user_id = ? and t.visibility = 'public'
 		LIMIT 8
 	`
 

@@ -21,6 +21,7 @@ func (handler *SearchHandler) GetNewTracks(response http.ResponseWriter, request
 	JOIN musician m ON t.musician_id = m.id
 	LEFT JOIN album a ON t.album_id = a.id
 	ORDER BY t.id DESC
+	WHERE t.visibility = 'public'
 	LIMIT 8;
 	`
 
@@ -55,6 +56,7 @@ func (handler *SearchHandler) GetChartTracks(response http.ResponseWriter, reque
 	JOIN musician m ON t.musician_id = m.id
 	LEFT JOIN album a ON t.album_id = a.id
 	ORDER BY t.stream_count DESC
+	WHERE t.visibility = 'public'
 	LIMIT 8;
 	`
 
@@ -94,7 +96,7 @@ func (handler *SearchHandler) SearchTracks(response http.ResponseWriter, request
 	FROM track t
 	JOIN musician m ON t.musician_id = m.id
 	LEFT JOIN album a ON t.album_id = a.id
-	WHERE t.title LIKE ? OR m.name LIKE ?
+	WHERE t.title LIKE ? OR m.name LIKE ? AND t.visibility = 'public'
 	LIMIT 20;
 	`
 
