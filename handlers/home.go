@@ -29,8 +29,8 @@ func (handler *HomeHandler) GetRecommendedTracks(response http.ResponseWriter, r
 	}
 
 	query := `
-		SELECT t.id, t.musician_id, t.title, t.duration, t.file_path, t.stream_count, t.visibility,
-		m.name AS artist, a.cover_path
+		SELECT t.id, t.musician_id, t.title, t.duration, t.file_path, t.stream_count,
+		m.name AS artist, a.cover_path, t.visibility
 		FROM track t
 		JOIN album a ON t.album_id = a.id
 		JOIN musician m ON t.musician_id = m.id
@@ -122,8 +122,8 @@ func (handler *HomeHandler) GetTrackedTracks(response http.ResponseWriter, reque
 		return
 	}
 	query := `
-		SELECT t.id, t.title, t.musician_id, m.name AS artist_name, a.cover_path, t.visibility
-		t.file_path, t.duration, t.stream_count
+		SELECT t.id, t.title, t.musician_id, m.name AS artist_name, a.cover_path,
+		t.file_path, t.duration, t.stream_count,  t.visibility
 		FROM liked_tracks lt
 		JOIN track t ON lt.track_id = t.id
 		JOIN album a ON t.album_id = a.id
@@ -166,8 +166,8 @@ func (handler *HomeHandler) GetHomeRecommendedTracks(response http.ResponseWrite
 		return
 	}
 	query := `
-		SELECT t.id, t.musician_id, t.title, t.duration, t.file_path, t.stream_count, t.visibility,
-		m.name AS artist, a.cover_path
+		SELECT t.id, t.musician_id, t.title, t.duration, t.file_path, t.stream_count,
+		m.name AS artist, a.cover_path, t.visibility,
 		FROM track t
 		JOIN album a ON t.album_id = a.id
 		JOIN musician m ON t.musician_id = m.id
