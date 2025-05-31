@@ -32,12 +32,12 @@ func (handler *SearchHandler) GetNewTracks(response http.ResponseWriter, request
 	}
 	defer rows.Close()
 
-	var tracks []models.TrackResponse
+	var tracks []models.Track
 	for rows.Next() {
-		var tr models.TrackResponse
+		var tr models.Track
 		if err := rows.Scan(
-			&tr.ID, &tr.Title, &tr.ArtistID, &tr.ArtistName,
-			&tr.ImageURL, &tr.AudioURL, &tr.Duration, &tr.Plays,
+			&tr.ID, &tr.ArtistID, &tr.Title, &tr.Duration, &tr.AudioURL, &tr.Plays,
+			&tr.ArtistName, &tr.ImageURL, &tr.Visibility,
 		); err != nil {
 			http.Error(response, err.Error(), http.StatusInternalServerError)
 			return
@@ -67,12 +67,12 @@ func (handler *SearchHandler) GetChartTracks(response http.ResponseWriter, reque
 	}
 	defer rows.Close()
 
-	var tracks []models.TrackResponse
+	var tracks []models.Track
 	for rows.Next() {
-		var tr models.TrackResponse
+		var tr models.Track
 		if err := rows.Scan(
-			&tr.ID, &tr.Title, &tr.ArtistID, &tr.ArtistName,
-			&tr.ImageURL, &tr.AudioURL, &tr.Duration, &tr.Plays,
+			&tr.ID, &tr.ArtistID, &tr.Title, &tr.Duration, &tr.AudioURL, &tr.Plays,
+			&tr.ArtistName, &tr.ImageURL, &tr.Visibility,
 		); err != nil {
 			http.Error(response, err.Error(), http.StatusInternalServerError)
 			return
@@ -108,12 +108,12 @@ func (handler *SearchHandler) SearchTracks(response http.ResponseWriter, request
 	}
 	defer rows.Close()
 
-	var tracks []models.TrackResponse
+	var tracks []models.Track
 	for rows.Next() {
-		var tr models.TrackResponse
+		var tr models.Track
 		if err := rows.Scan(
-			&tr.ID, &tr.Title, &tr.ArtistID, &tr.ArtistName,
-			&tr.ImageURL, &tr.AudioURL, &tr.Duration, &tr.Plays,
+			&tr.ID, &tr.ArtistID, &tr.Title, &tr.Duration, &tr.AudioURL, &tr.Plays,
+			&tr.ArtistName, &tr.ImageURL, &tr.Visibility,
 		); err != nil {
 			http.Error(response, err.Error(), http.StatusInternalServerError)
 			return

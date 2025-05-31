@@ -50,12 +50,12 @@ func (handler *HomeHandler) GetRecommendedTracks(response http.ResponseWriter, r
 	}
 	defer rows.Close()
 
-	tracks := make([]models.TrackResponse, 0)
+	tracks := make([]models.Track, 0)
 	for rows.Next() {
-		var tr models.TrackResponse
+		var tr models.Track
 		if err := rows.Scan(
 			&tr.ID, &tr.ArtistID, &tr.Title, &tr.Duration, &tr.AudioURL, &tr.Plays,
-			&tr.ArtistName, &tr.ImageURL,
+			&tr.ArtistName, &tr.ImageURL, &tr.Visibility,
 		); err != nil {
 			log.Println("GetRecommendedTracks:", err)
 			http.Error(response, err.Error(), http.StatusInternalServerError)
@@ -139,11 +139,12 @@ func (handler *HomeHandler) GetTrackedTracks(response http.ResponseWriter, reque
 	}
 	defer rows.Close()
 
-	tracks := make([]models.TrackResponse, 0)
+	tracks := make([]models.Track, 0)
 	for rows.Next() {
-		var tr models.TrackResponse
-		if err := rows.Scan(&tr.ID, &tr.Title, &tr.ArtistID, &tr.ArtistName,
-			&tr.ImageURL, &tr.AudioURL, &tr.Duration, &tr.Plays,
+		var tr models.Track
+		if err := rows.Scan(
+			&tr.ID, &tr.ArtistID, &tr.Title, &tr.Duration, &tr.AudioURL, &tr.Plays,
+			&tr.ArtistName, &tr.ImageURL, &tr.Visibility,
 		); err != nil {
 			log.Println("GetTrackedTracks:", err)
 			http.Error(response, err.Error(), http.StatusInternalServerError)
@@ -184,11 +185,13 @@ func (handler *HomeHandler) GetHomeRecommendedTracks(response http.ResponseWrite
 		return
 	}
 	defer rows.Close()
-	var tracks []models.TrackResponse = make([]models.TrackResponse, 0)
+	var tracks []models.Track = make([]models.Track, 0)
 	for rows.Next() {
-		var tr models.TrackResponse
-		if err := rows.Scan(&tr.ID, &tr.ArtistID, &tr.Title, &tr.Duration, &tr.AudioURL, &tr.Plays,
-			&tr.ArtistName, &tr.ImageURL); err != nil {
+		var tr models.Track
+		if err := rows.Scan(
+			&tr.ID, &tr.ArtistID, &tr.Title, &tr.Duration, &tr.AudioURL, &tr.Plays,
+			&tr.ArtistName, &tr.ImageURL, &tr.Visibility,
+		); err != nil {
 			log.Println("GetHomeRecommendedTracks:", err)
 			http.Error(response, err.Error(), http.StatusInternalServerError)
 			return
@@ -273,11 +276,12 @@ func (handler *HomeHandler) GetHomeTrackedTracks(response http.ResponseWriter, r
 	}
 	defer rows.Close()
 
-	var tracks []models.TrackResponse = make([]models.TrackResponse, 0)
+	var tracks []models.Track = make([]models.Track, 0)
 	for rows.Next() {
-		var tr models.TrackResponse
-		if err := rows.Scan(&tr.ID, &tr.Title, &tr.ArtistID, &tr.ArtistName,
-			&tr.ImageURL, &tr.AudioURL, &tr.Duration, &tr.Plays,
+		var tr models.Track
+		if err := rows.Scan(
+			&tr.ID, &tr.ArtistID, &tr.Title, &tr.Duration, &tr.AudioURL, &tr.Plays,
+			&tr.ArtistName, &tr.ImageURL, &tr.Visibility,
 		); err != nil {
 			log.Println("GetHomeTrackedTracks:", err)
 			http.Error(response, err.Error(), http.StatusInternalServerError)
