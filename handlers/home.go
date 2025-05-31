@@ -190,7 +190,7 @@ func (handler *HomeHandler) GetHomeRecommendedTracks(response http.ResponseWrite
 		var tr models.TrackResponse
 		if err := rows.Scan(
 			&tr.ID, &tr.Title, &tr.ArtistID, &tr.ArtistName, &tr.ImageURL,
-			&tr.AudioURL, &tr.Duration, &tr.Plays, &tr.Visibility,
+			&tr.AudioURL, &tr.Duration, &tr.Plays,
 		); err != nil {
 			log.Println("GetHomeRecommendedTracks:", err)
 			http.Error(response, err.Error(), http.StatusInternalServerError)
