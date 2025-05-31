@@ -14,9 +14,9 @@ type Track struct {
 }
 
 type TrackResponse struct {
-	ID         int    `json:"id"`
+	ID         string `json:"id"`
 	Title      string `json:"title"`
-	ArtistID   int    `json:"artistId"`
+	ArtistID   string `json:"artistId"`
 	ArtistName string `json:"artistName"`
 	ImageURL   string `json:"imageUrl"`
 	AudioURL   string `json:"audioUrl"`
