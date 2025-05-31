@@ -173,7 +173,7 @@ func (handler *HomeHandler) GetHomeRecommendedTracks(response http.ResponseWrite
 		JOIN track t ON lt.track_id = t.id
 		JOIN album a ON t.album_id = a.id
 		JOIN musician m ON t.musician_id = m.id
-		WHERE lt.user_id = ? AND t.visibility == 'public'
+		WHERE lt.user_id = ? AND t.visibility = 'public'
 		GROUP BY t.id
 		ORDER BY RAND()
 		LIMIT 8;
