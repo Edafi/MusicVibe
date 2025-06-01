@@ -187,7 +187,7 @@ func (handler *MusicianHandler) PostUserFollowing(response http.ResponseWriter, 
 	response.WriteHeader(http.StatusCreated)
 }
 
-// GET /musician/{id}
+// GET /musician/&{id}
 func (handler *MusicianHandler) GetMusician(w http.ResponseWriter, r *http.Request) {
 	musicianID := mux.Vars(r)["id"]
 
@@ -263,7 +263,7 @@ func (handler *MusicianHandler) GetMusician(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// Получаем альбомы и треки
+	// Получаем альбомы
 	albumRows, err := handler.DB.Query(`
 		SELECT id, title, YEAR(release_date), cover_path, description
 		FROM album
@@ -330,17 +330,19 @@ func (handler *MusicianHandler) GetPopularTracks(response http.ResponseWriter, r
 	`
 	rows, err := handler.DB.Query(query, musicianID)
 	if err != nil {
+		log.Println("GetPopularTracks - Error fetching popular tracks: ", err)
 		http.Error(response, "Error fetching popular tracks", http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
 
-	var tracks []models.Track
+	var tracks []models.TrackResponse
 	for rows.Next() {
-		var t models.Track
-		err := rows.Scan(&t.ID, &t.MusicianID, &t.AlbumID, &t.Title, &t.Duration,
-			&t.FilePath, &t.GenreID, &t.StreamCount, &t.Visibility)
+		var t models.TrackResponse
+		err := rows.Scan(&t.ID, &t.Title, &t.ArtistID, &t.ArtistName, &t.ImageURL,
+			&t.AudioURL, &t.Duration, &t.Plays, &t.Visibility)
 		if err != nil {
+			log.Println("GetPopularTracks - Error scanning track: ", err)
 			http.Error(response, "Error scanning track", http.StatusInternalServerError)
 			return
 		}
