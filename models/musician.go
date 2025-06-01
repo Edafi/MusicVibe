@@ -1,15 +1,12 @@
 package models
 
 type Musician struct {
-	ID         string `json:"id"`
-	UserID     string `json:"user_id"`
-	Name       string `json:"name"`
-	AvatarPath string `json:"avatar_path"`
+	MusicianPage
+	UserID string `json:"userId"`
 }
 
-type MusicianResponse struct {
+type MusicianPage struct {
 	ID               string         `json:"id"`
-	UserID           string         `json:"userId"`
 	Name             string         `json:"name"`
 	Email            string         `json:"email"`
 	AvatarPath       string         `json:"avatarUrl"`

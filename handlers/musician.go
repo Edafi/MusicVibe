@@ -18,10 +18,10 @@ type MusicianHandler struct {
 }
 
 // --------------------- GET /musicians --------------------- //
-func (handler *MusicianHandler) GetMusicians(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value(middleware.ContextUserIDKey).(string)
+func (handler *MusicianHandler) GetMusicians(response http.ResponseWriter, request *http.Request) {
+	userID, ok := request.Context().Value(middleware.ContextUserIDKey).(string)
 	if !ok || userID == "" {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		http.Error(response, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
@@ -38,18 +38,18 @@ func (handler *MusicianHandler) GetMusicians(w http.ResponseWriter, r *http.Requ
 
 	rows, err := handler.DB.Query(musicianQuery, userID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(response, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
 
-	var musicians []models.MusicianResponse
+	var musicians []models.Musician = make([]models.Musician, 0)
 
 	for rows.Next() {
-		var m models.MusicianResponse
+		var m models.Musician
 		err := rows.Scan(&m.ID, &m.UserID, &m.Name, &m.Email, &m.AvatarPath, &m.BackgroundPath, &m.Description, &m.HasCompleteSetup)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(response, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -111,8 +111,8 @@ func (handler *MusicianHandler) GetMusicians(w http.ResponseWriter, r *http.Requ
 		musicians = append(musicians, m)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(musicians)
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(musicians)
 }
 
 // --------------------- POST /user/following --------------------- //
@@ -188,90 +188,138 @@ func (handler *MusicianHandler) PostUserFollowing(response http.ResponseWriter, 
 }
 
 // GET /musician/{id}
-func (h *MusicianHandler) GetMusician(w http.ResponseWriter, r *http.Request) {
-	_ = r.Context().Value(middleware.ContextUserIDKey).(string)
-
+func (handler *MusicianHandler) GetMusician(w http.ResponseWriter, r *http.Request) {
 	musicianID := mux.Vars(r)["id"]
 
 	var musician models.Musician
-	err := h.DB.QueryRow("SELECT id, user_id, name, avatar_path FROM musician WHERE id = ?", musicianID).
-		Scan(&musician.ID, &musician.UserID, &musician.Name, &musician.AvatarPath)
+
+	// Получаем данные из musician и user
+	err := handler.DB.QueryRow(`
+		SELECT m.id, m.user_id, m.name, u.email, u.avatar_path, u.background_path, u.description, u.has_complete_setup
+		FROM musician m
+		JOIN user u ON m.user_id = u.id
+		WHERE m.id = ?
+	`, musicianID).Scan(
+		&musician.ID, &musician.UserID, &musician.Name, &musician.Email,
+		&musician.AvatarPath, &musician.BackgroundPath, &musician.Description, &musician.HasCompleteSetup,
+	)
 	if err != nil {
+		log.Println("GetMusician - Musician not found: ", err)
 		http.Error(w, "Musician not found", http.StatusNotFound)
 		return
 	}
 
-	// Получаем альбомы музыканта
-	albumsQuery := `
-	SELECT id, musician_id, title, release_date, cover_path, genre_id, description
-	FROM album
-	WHERE musician_id = ?
-	`
-	albumRows, err := h.DB.Query(albumsQuery, musicianID)
+	// Получаем жанры
+	genres := []string{}
+	rows, err := handler.DB.Query(`
+		SELECT g.name
+		FROM genre g
+		JOIN musician_genre mg ON g.id = mg.genre_id
+		WHERE mg.musician_id = ?
+	`, musicianID)
 	if err != nil {
+		log.Println("GetMusician - Error getting genres: ", err)
+		http.Error(w, "Error getting genres", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var genre string
+		rows.Scan(&genre)
+		genres = append(genres, genre)
+	}
+	musician.Genres = genres
+
+	// Получаем социальные сети пользователя
+	socialLinks := []models.SocialLink{}
+	rows, err = handler.DB.Query(`
+		SELECT sn.name, usn.profile_url
+		FROM user_social_network usn
+		JOIN social_network sn ON usn.social_network_id = sn.id
+		WHERE usn.user_id = ?
+	`, musician.UserID)
+	if err != nil {
+		log.Println("GetMusician - Error getting social links: ", err)
+		http.Error(w, "Error getting social links", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var link models.SocialLink
+		rows.Scan(&link.Name, &link.URL)
+		socialLinks = append(socialLinks, link)
+	}
+	musician.SocialLinks = socialLinks
+
+	// Получаем количество прослушиваний
+	err = handler.DB.QueryRow(`
+		SELECT COALESCE(SUM(stream_count), 0)
+		FROM track
+		WHERE musician_id = ?
+	`, musicianID).Scan(&musician.Auditions)
+	if err != nil {
+		log.Println("GetMusician - Error getting auditions: ", err)
+		http.Error(w, "Error getting auditions", http.StatusInternalServerError)
+		return
+	}
+
+	// Получаем альбомы и треки
+	albumRows, err := handler.DB.Query(`
+		SELECT id, title, YEAR(release_date), cover_path, description
+		FROM album
+		WHERE musician_id = ?
+	`, musicianID)
+	if err != nil {
+		log.Println("GetMusician - Error getting albums: ", err)
 		http.Error(w, "Error getting albums", http.StatusInternalServerError)
 		return
 	}
 	defer albumRows.Close()
 
-	var albums []models.Album
+	albums := []models.AlbumPreview{}
 	for albumRows.Next() {
-		var album models.Album
-		err := albumRows.Scan(&album.ID, &album.MusicianID, &album.Title, &album.ReleaseDate,
-			&album.CoverPath, &album.GenreID, &album.Description)
+		var album models.AlbumPreview
+		var albumID string
+		err := albumRows.Scan(&albumID, &album.Title, &album.Year, &album.CoverUrl, &album.Description)
 		if err != nil {
+			log.Println("GetMusician - Error scanning album: ", err)
 			http.Error(w, "Error scanning album", http.StatusInternalServerError)
 			return
 		}
-		albums = append(albums, album)
-	}
+		album.ID = albumID
 
-	// Получаем треки музыканта
-	tracksQuery := `
-	SELECT id, musician_id, album_id, title, duration, file_path, genre_id, stream_count, visibility
-	FROM track
-	WHERE musician_id = ?
-	`
-	trackRows, err := h.DB.Query(tracksQuery, musicianID)
-	if err != nil {
-		http.Error(w, "Error getting tracks", http.StatusInternalServerError)
-		return
-	}
-	defer trackRows.Close()
-
-	var tracks []models.Track
-	for trackRows.Next() {
-		var track models.Track
-		err := trackRows.Scan(&track.ID, &track.MusicianID, &track.AlbumID, &track.Title, &track.Duration,
-			&track.FilePath, &track.GenreID, &track.StreamCount, &track.Visibility)
+		// Получаем ID треков альбома
+		trackIDs := []string{}
+		trackRows, err := handler.DB.Query(`
+			SELECT id FROM track WHERE album_id = ?
+		`, albumID)
 		if err != nil {
-			http.Error(w, "Error scanning track", http.StatusInternalServerError)
+			log.Println("GetMusician - Error getting tracks: ", err)
+			http.Error(w, "Error getting tracks", http.StatusInternalServerError)
 			return
 		}
-		tracks = append(tracks, track)
-	}
+		for trackRows.Next() {
+			var trackID string
+			trackRows.Scan(&trackID)
+			trackIDs = append(trackIDs, trackID)
+		}
+		trackRows.Close()
 
-	type MusicianResponse struct {
-		Musician models.Musician `json:"musician"`
-		Albums   []models.Album  `json:"albums"`
-		Tracks   []models.Track  `json:"tracks"`
+		album.Tracks = trackIDs
+		albums = append(albums, album)
 	}
+	musician.Albums = albums
 
-	response := MusicianResponse{
-		Musician: musician,
-		Albums:   albums,
-		Tracks:   tracks,
-	}
-
+	// Возвращаем JSON
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	json.NewEncoder(w).Encode(musician)
 }
 
 // GET /musician/{id}/popular-tracks
-func (h *MusicianHandler) GetPopularTracks(w http.ResponseWriter, r *http.Request) {
-	_ = r.Context().Value(middleware.ContextUserIDKey).(string)
+func (handler *MusicianHandler) GetPopularTracks(response http.ResponseWriter, request *http.Request) {
+	_ = request.Context().Value(middleware.ContextUserIDKey).(string)
 
-	musicianID := mux.Vars(r)["id"]
+	musicianID := mux.Vars(request)["id"]
 
 	query := `
 	SELECT id, musician_id, album_id, title, duration, file_path, genre_id, stream_count, visibility
@@ -280,9 +328,9 @@ func (h *MusicianHandler) GetPopularTracks(w http.ResponseWriter, r *http.Reques
 	ORDER BY stream_count DESC
 	LIMIT 10;
 	`
-	rows, err := h.DB.Query(query, musicianID)
+	rows, err := handler.DB.Query(query, musicianID)
 	if err != nil {
-		http.Error(w, "Error fetching popular tracks", http.StatusInternalServerError)
+		http.Error(response, "Error fetching popular tracks", http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
@@ -293,12 +341,12 @@ func (h *MusicianHandler) GetPopularTracks(w http.ResponseWriter, r *http.Reques
 		err := rows.Scan(&t.ID, &t.MusicianID, &t.AlbumID, &t.Title, &t.Duration,
 			&t.FilePath, &t.GenreID, &t.StreamCount, &t.Visibility)
 		if err != nil {
-			http.Error(w, "Error scanning track", http.StatusInternalServerError)
+			http.Error(response, "Error scanning track", http.StatusInternalServerError)
 			return
 		}
 		tracks = append(tracks, t)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(tracks)
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(tracks)
 }
