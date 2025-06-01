@@ -255,7 +255,7 @@ func (handler *MusicianHandler) GetMusician(w http.ResponseWriter, r *http.Reque
 	err = handler.DB.QueryRow(`
 		SELECT COALESCE(SUM(stream_count), 0)
 		FROM track
-		WHERE musician_id = ?
+		WHERE musician_id = ? AND track.visibility = 'public'
 	`, musicianID).Scan(&musician.Auditions)
 	if err != nil {
 		log.Println("GetMusician - Error getting auditions: ", err)
@@ -291,7 +291,7 @@ func (handler *MusicianHandler) GetMusician(w http.ResponseWriter, r *http.Reque
 		// Получаем ID треков альбома
 		trackIDs := []string{}
 		trackRows, err := handler.DB.Query(`
-			SELECT id FROM track WHERE album_id = ?
+			SELECT id FROM track WHERE album_id = ? AND track.visibility = 'public'
 		`, albumID)
 		if err != nil {
 			log.Println("GetMusician - Error getting tracks: ", err)
@@ -322,9 +322,11 @@ func (handler *MusicianHandler) GetPopularTracks(response http.ResponseWriter, r
 	musicianID := mux.Vars(request)["id"]
 
 	query := `
-	SELECT id, musician_id, album_id, title, duration, file_path, genre_id, stream_count, visibility
+	SELECT id, musician_id, title, duration, file_path, stream_count, m.name, a.cover_path, visibility
 	FROM track
-	WHERE musician_id = ?
+	JOIN musician m ON track.musician_id = m.id
+	JOIN album a ON track.album_id = a.id
+	WHERE musician_id = ? AND visibility = 'public'
 	ORDER BY stream_count DESC
 	LIMIT 10;
 	`
@@ -339,8 +341,8 @@ func (handler *MusicianHandler) GetPopularTracks(response http.ResponseWriter, r
 	var tracks []models.TrackResponse
 	for rows.Next() {
 		var t models.TrackResponse
-		err := rows.Scan(&t.ID, &t.Title, &t.ArtistID, &t.ArtistName, &t.ImageURL,
-			&t.AudioURL, &t.Duration, &t.Plays, &t.Visibility)
+		err := rows.Scan(&t.ID, &t.ArtistID, &t.Title, &t.Duration, &t.AudioURL,
+			&t.Plays, &t.ArtistName, &t.ImageURL, &t.Visibility)
 		if err != nil {
 			log.Println("GetPopularTracks - Error scanning track: ", err)
 			http.Error(response, "Error scanning track", http.StatusInternalServerError)
