@@ -322,11 +322,11 @@ func (handler *MusicianHandler) GetPopularTracks(response http.ResponseWriter, r
 	musicianID := mux.Vars(request)["id"]
 
 	query := `
-	SELECT id, musician_id, title, duration, file_path, stream_count, m.name, a.cover_path, visibility
+	SELECT track.id, track.musician_id, track.title, track.duration, track.file_path, track.stream_count, m.name, a.cover_path, track.visibility
 	FROM track
 	JOIN musician m ON track.musician_id = m.id
 	JOIN album a ON track.album_id = a.id
-	WHERE musician_id = ? AND visibility = 'public'
+	WHERE track.musician_id = ? AND track.visibility = 'public'
 	ORDER BY stream_count DESC
 	LIMIT 10;
 	`
