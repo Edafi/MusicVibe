@@ -43,7 +43,7 @@ func (handler *FavoritesHandler) GetFavoriteTracks(response http.ResponseWriter,
 	}
 	defer rows.Close()
 
-	var tracks []models.TrackResponse
+	var tracks []models.TrackResponse = make([]models.TrackResponse, 0)
 	for rows.Next() {
 		var track models.TrackResponse
 
@@ -128,7 +128,7 @@ func (handler *FavoritesHandler) GetFavoriteAlbums(response http.ResponseWriter,
 	}
 	defer rows.Close()
 
-	var albums []models.AlbumPageResponse
+	var albums []models.AlbumPageResponse = make([]models.AlbumPageResponse, 0)
 	for rows.Next() {
 		var album models.AlbumPageResponse
 
