@@ -17,6 +17,10 @@ type FollowingHandler struct {
 
 // Получить подписанных музыкантов
 func (handler *FollowingHandler) GetFollowingMusicians(response http.ResponseWriter, request *http.Request) {
+
+	log.Println("Path:", request.URL.Path)
+	log.Println("Vars:", mux.Vars(request))
+
 	val := request.Context().Value(middleware.ContextUserIDKey)
 	userID, ok := val.(string)
 	if !ok {
@@ -101,6 +105,11 @@ func (handler *FollowingHandler) GetFollowingMusicians(response http.ResponseWri
 
 // Подписаться
 func (handler *FollowingHandler) FollowMusician(response http.ResponseWriter, request *http.Request) {
+
+	log.Println("FollowMusician handler called")
+	log.Println("Path:", request.URL.Path)
+	log.Println("Vars:", mux.Vars(request))
+
 	val := request.Context().Value(middleware.ContextUserIDKey)
 	userID, ok := val.(string)
 	if !ok {
@@ -126,6 +135,10 @@ func (handler *FollowingHandler) FollowMusician(response http.ResponseWriter, re
 
 // Отписаться
 func (handler *FollowingHandler) UnfollowMusician(response http.ResponseWriter, request *http.Request) {
+
+	log.Println("Path:", request.URL.Path)
+	log.Println("Vars:", mux.Vars(request))
+
 	val := request.Context().Value(middleware.ContextUserIDKey)
 	userID, ok := val.(string)
 	if !ok {
