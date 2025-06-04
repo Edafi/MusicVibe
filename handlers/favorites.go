@@ -16,7 +16,7 @@ type FavoritesHandler struct {
 
 // Получить избранные треки
 func (handler *FavoritesHandler) GetFavoriteTracks(response http.ResponseWriter, request *http.Request) {
-	userID := request.Context().Value("id").(int)
+	userID := request.Context().Value("id").(string)
 
 	query := `
 		SELECT t.id, t.title, m.id, m.name, t.image_path, t.audio_path,
@@ -82,7 +82,7 @@ func (handler *FavoritesHandler) DeleteFavoriteTrack(response http.ResponseWrite
 
 // Получить избранные альбомы
 func (handler *FavoritesHandler) GetFavoriteAlbums(response http.ResponseWriter, request *http.Request) {
-	userID := request.Context().Value("id").(int)
+	userID := request.Context().Value("id").(string)
 
 	query := `
 		SELECT a.id, a.title, a.image_path, YEAR(a.release_date), m.id, m.name
