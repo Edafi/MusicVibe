@@ -25,6 +25,8 @@ func (handler *FollowingHandler) GetFollowingMusicians(response http.ResponseWri
 		return
 	}
 
+	log.Println("User ID:", userID)
+
 	rows, err := handler.DB.Query(`
 		SELECT m.id, u.email, m.name, u.avatar_path, u.background_path, 
 		u.description, u.has_complete_setup
@@ -107,6 +109,8 @@ func (handler *FollowingHandler) FollowMusician(response http.ResponseWriter, re
 		return
 	}
 
+	log.Println("User ID:", userID)
+
 	musicianID := mux.Vars(request)["id"]
 
 	_, err := handler.DB.Exec("INSERT IGNORE INTO user_following (user_id, musician_id) VALUES (?, ?)", userID, musicianID)
@@ -127,6 +131,8 @@ func (handler *FollowingHandler) UnfollowMusician(response http.ResponseWriter, 
 		http.Error(response, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
+
+	log.Println("User ID:", userID)
 
 	musicianID := mux.Vars(request)["id"]
 
