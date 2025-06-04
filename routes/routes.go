@@ -69,16 +69,16 @@ func SetupRoutes(db *sql.DB, mongoDatabase *mongo.Database) http.Handler {
 
 	favorites := &handlers.FavoritesHandler{DB: db}
 	secured.HandleFunc("/favorites", favorites.GetFavoriteTracks).Methods("GET")
-	secured.HandleFunc("/favorites/{trackId}", favorites.AddFavoriteTrack).Methods("POST")
-	secured.HandleFunc("/favorites/{trackId}", favorites.DeleteFavoriteTrack).Methods("DELETE")
+	secured.HandleFunc("/favorites/{id}", favorites.AddFavoriteTrack).Methods("POST")
+	secured.HandleFunc("/favorites/{id}", favorites.DeleteFavoriteTrack).Methods("DELETE")
 	secured.HandleFunc("/favorites/albums", favorites.GetFavoriteAlbums).Methods("GET")
-	secured.HandleFunc("/favorites/albums/{albumId}", favorites.AddFavoriteAlbum).Methods("POST")
-	secured.HandleFunc("/favorites/albums/{albumId}", favorites.DeleteFavoriteAlbum).Methods("DELETE")
+	secured.HandleFunc("/favorites/albums/{id}", favorites.AddFavoriteAlbum).Methods("POST")
+	secured.HandleFunc("/favorites/albums/{id}", favorites.DeleteFavoriteAlbum).Methods("DELETE")
 
 	following := &handlers.FollowingHandler{DB: db}
 	secured.HandleFunc("/following", following.GetFollowingMusicians).Methods("GET")
-	secured.HandleFunc("/following/{musicianId}", following.FollowMusician).Methods("POST")
-	secured.HandleFunc("/following/{musicianId}", following.UnfollowMusician).Methods("DELETE")
+	secured.HandleFunc("/following/{id}", following.FollowMusician).Methods("POST")
+	secured.HandleFunc("/following/{id}", following.UnfollowMusician).Methods("DELETE")
 
 	// CORS
 	c := cors.New(cors.Options{
