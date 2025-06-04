@@ -58,7 +58,7 @@ func (handler *AlbumHandler) GetAlbum(response http.ResponseWriter, request *htt
 	json.NewEncoder(response).Encode(album)
 }
 
-func (handler *TrackHandler) GetAlbumTracks(response http.ResponseWriter, request *http.Request) {
+func (handler *AlbumHandler) GetAlbumTracks(response http.ResponseWriter, request *http.Request) {
 	albumID := mux.Vars(request)["id"]
 
 	query := `

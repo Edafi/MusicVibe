@@ -65,6 +65,7 @@ func SetupRoutes(db *sql.DB, mongoDatabase *mongo.Database) http.Handler {
 
 	albumHandler := &handlers.AlbumHandler{DB: db}
 	secured.HandleFunc("/album/{id}", albumHandler.GetAlbum).Methods("GET")
+	secured.HandleFunc("/album/{id}/tracks", albumHandler.GetAlbumTracks).Methods("GET")
 
 	// CORS
 	c := cors.New(cors.Options{
