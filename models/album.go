@@ -19,3 +19,15 @@ type RecommendedAlbum struct {
 	Year        int    `json:"year"`
 	Description string `json:"description"`
 }
+
+type AlbumPageResponse struct {
+	ID              string `json:"id"`
+	Title           string `json:"title"`
+	Year            int    `json:"year"`
+	CoverURL        string `json:"coverUrl"`
+	Tracks          []int  `json:"tracks"`
+	Description     string `json:"description"`
+	ArtistID        string `json:"artistId"`
+	ArtistName      string `json:"artistName"`
+	ArtistAvatarURL string `json:"artistAvatarUrl"`
+}

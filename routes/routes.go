@@ -63,6 +63,9 @@ func SetupRoutes(db *sql.DB, mongoDatabase *mongo.Database) http.Handler {
 	secured.HandleFunc("/comments/track/{id}", commentHandler.GetTrackComments).Methods("GET")
 	secured.HandleFunc("/comments/track/{id}", commentHandler.PostTrackComment).Methods("POST")
 
+	albumHandler := &handlers.AlbumHandler{DB: db}
+	secured.HandleFunc("/album/{id}", albumHandler.GetAlbum).Methods("GET")
+
 	// CORS
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
