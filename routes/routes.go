@@ -60,8 +60,8 @@ func SetupRoutes(db *sql.DB, mongoDatabase *mongo.Database) http.Handler {
 	secured.HandleFunc("/track/{id}", trackHandler.GetTrack).Methods("GET")
 
 	commentHandler := &handlers.CommentHandler{DB: db, MongoDatabase: mongoDatabase}
-	secured.HandleFunc("comments/track/{id}", commentHandler.GetTrackComments).Methods("GET")
-	secured.HandleFunc("comments/track/{id}", commentHandler.PostTrackComment).Methods("POST")
+	secured.HandleFunc("/comments/track/{id}", commentHandler.GetTrackComments).Methods("GET")
+	secured.HandleFunc("/comments/track/{id}", commentHandler.PostTrackComment).Methods("POST")
 
 	// CORS
 	c := cors.New(cors.Options{
