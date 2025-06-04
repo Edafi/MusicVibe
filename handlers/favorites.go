@@ -16,7 +16,7 @@ type FavoritesHandler struct {
 
 // Получить избранные треки
 func (handler *FavoritesHandler) GetFavoriteTracks(response http.ResponseWriter, request *http.Request) {
-	userID := request.Context().Value("userID").(int)
+	userID := request.Context().Value("id").(int)
 
 	query := `
 		SELECT t.id, t.title, m.id, m.name, t.image_path, t.audio_path,
@@ -52,7 +52,7 @@ func (handler *FavoritesHandler) GetFavoriteTracks(response http.ResponseWriter,
 
 // Добавить трек в избранное
 func (handler *FavoritesHandler) AddFavoriteTrack(response http.ResponseWriter, request *http.Request) {
-	userID := request.Context().Value("userID").(string)
+	userID := request.Context().Value("id").(string)
 	trackID := mux.Vars(request)["trackId"]
 
 	_, err := handler.DB.Exec(`INSERT IGNORE INTO liked_tracks (user_id, track_id) VALUES (?, ?)`, userID, trackID)
@@ -67,7 +67,7 @@ func (handler *FavoritesHandler) AddFavoriteTrack(response http.ResponseWriter, 
 
 // Удалить трек из избранного
 func (handler *FavoritesHandler) DeleteFavoriteTrack(response http.ResponseWriter, request *http.Request) {
-	userID := request.Context().Value("userID").(string)
+	userID := request.Context().Value("id").(string)
 	trackID := mux.Vars(request)["trackId"]
 
 	_, err := handler.DB.Exec(`DELETE FROM liked_tracks WHERE user_id = ? AND track_id = ?`, userID, trackID)
@@ -82,7 +82,7 @@ func (handler *FavoritesHandler) DeleteFavoriteTrack(response http.ResponseWrite
 
 // Получить избранные альбомы
 func (handler *FavoritesHandler) GetFavoriteAlbums(response http.ResponseWriter, request *http.Request) {
-	userID := request.Context().Value("userID").(int)
+	userID := request.Context().Value("id").(int)
 
 	query := `
 		SELECT a.id, a.title, a.image_path, YEAR(a.release_date), m.id, m.name
@@ -118,7 +118,7 @@ func (handler *FavoritesHandler) GetFavoriteAlbums(response http.ResponseWriter,
 
 // Добавить альбом в избранное
 func (handler *FavoritesHandler) AddFavoriteAlbum(response http.ResponseWriter, request *http.Request) {
-	userID := request.Context().Value("userID").(string)
+	userID := request.Context().Value("id").(string)
 	albumID := mux.Vars(request)["albumId"]
 
 	_, err := handler.DB.Exec(`INSERT IGNORE INTO liked_albums (user_id, album_id) VALUES (?, ?)`, userID, albumID)
@@ -133,7 +133,7 @@ func (handler *FavoritesHandler) AddFavoriteAlbum(response http.ResponseWriter, 
 
 // Удалить альбом из избранного
 func (handler *FavoritesHandler) DeleteFavoriteAlbum(response http.ResponseWriter, request *http.Request) {
-	userID := request.Context().Value("userID").(string)
+	userID := request.Context().Value("id").(string)
 	albumID := mux.Vars(request)["albumId"]
 
 	_, err := handler.DB.Exec(`DELETE FROM liked_albums WHERE user_id = ? AND album_id = ?`, userID, albumID)

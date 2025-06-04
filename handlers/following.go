@@ -15,7 +15,7 @@ type FollowingHandler struct {
 
 // Получить подписанных музыкантов
 func (handler *FollowingHandler) GetFollowingMusicians(response http.ResponseWriter, request *http.Request) {
-	userID := request.Context().Value("userID").(string)
+	userID := request.Context().Value("id").(string)
 
 	rows, err := handler.DB.Query(`
 		SELECT m.id, u.email, m.name, u.avatar_path, u.background_path, 
@@ -91,7 +91,7 @@ func (handler *FollowingHandler) GetFollowingMusicians(response http.ResponseWri
 
 // Подписаться
 func (handler *FollowingHandler) FollowMusician(response http.ResponseWriter, request *http.Request) {
-	userID := request.Context().Value("userID").(string)
+	userID := request.Context().Value("id").(string)
 	musicianID := mux.Vars(request)["musicianId"]
 
 	_, err := handler.DB.Exec("INSERT IGNORE INTO user_following (user_id, musician_id) VALUES (?, ?)", userID, musicianID)
@@ -105,7 +105,7 @@ func (handler *FollowingHandler) FollowMusician(response http.ResponseWriter, re
 
 // Отписаться
 func (handler *FollowingHandler) UnfollowMusician(response http.ResponseWriter, request *http.Request) {
-	userID := request.Context().Value("userID").(string)
+	userID := request.Context().Value("id").(string)
 	musicianID := mux.Vars(request)["musicianId"]
 
 	_, err := handler.DB.Exec("DELETE FROM user_following WHERE user_id = ? AND musician_id = ?", userID, musicianID)
