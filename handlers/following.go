@@ -113,6 +113,8 @@ func (handler *FollowingHandler) FollowMusician(response http.ResponseWriter, re
 
 	musicianID := mux.Vars(request)["id"]
 
+	log.Println("User ID:", musicianID)
+
 	_, err := handler.DB.Exec("INSERT IGNORE INTO user_following (user_id, musician_id) VALUES (?, ?)", userID, musicianID)
 	if err != nil {
 		http.Error(response, "Insert error", http.StatusInternalServerError)
@@ -135,6 +137,8 @@ func (handler *FollowingHandler) UnfollowMusician(response http.ResponseWriter, 
 	log.Println("User ID:", userID)
 
 	musicianID := mux.Vars(request)["id"]
+
+	log.Println("User ID:", musicianID)
 
 	_, err := handler.DB.Exec("DELETE FROM user_following WHERE user_id = ? AND musician_id = ?", userID, musicianID)
 	if err != nil {
