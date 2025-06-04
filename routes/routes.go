@@ -8,9 +8,10 @@ import (
 	"github.com/Edafi/MusicVibe/middleware"
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func SetupRoutes(db *sql.DB) http.Handler {
+func SetupRoutes(db *sql.DB, mongoDatabase *mongo.Database) http.Handler {
 	router := mux.NewRouter()
 
 	// обработчики пользователя
@@ -50,10 +51,17 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	secured.HandleFunc("/home/albums/recommended", homeHandler.GetHomeRecommendedAlbums).Methods("GET")
 	secured.HandleFunc("/home/tracks/tracked", homeHandler.GetHomeTrackedTracks).Methods("GET")
 
-	trackHandler := &handlers.SearchHandler{DB: db}
-	secured.HandleFunc("/tracks/new", trackHandler.GetNewTracks).Methods("GET")
-	secured.HandleFunc("/tracks/chart", trackHandler.GetChartTracks).Methods("GET")
-	secured.HandleFunc("/tracks/search", trackHandler.SearchTracks).Methods("GET")
+	searchHandler := &handlers.SearchHandler{DB: db}
+	secured.HandleFunc("/tracks/new", searchHandler.GetNewTracks).Methods("GET")
+	secured.HandleFunc("/tracks/chart", searchHandler.GetChartTracks).Methods("GET")
+	secured.HandleFunc("/tracks/search", searchHandler.SearchTracks).Methods("GET")
+
+	trackHandler := &handlers.TrackHandler{DB: db}
+	secured.HandleFunc("/tack/{id}", trackHandler.GetTrack).Methods("GET")
+
+	commentHandler := &handlers.CommentHandler{DB: db, MongoDatabase: mongoDatabase}
+	secured.HandleFunc("comments/track/{id}", commentHandler.GetTrackComments).Methods("GET")
+	secured.HandleFunc("comments/track/{id}", commentHandler.PostTrackComment).Methods("POST")
 
 	// CORS
 	c := cors.New(cors.Options{
