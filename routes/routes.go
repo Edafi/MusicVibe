@@ -57,7 +57,7 @@ func SetupRoutes(db *sql.DB, mongoDatabase *mongo.Database) http.Handler {
 	secured.HandleFunc("/tracks/search", searchHandler.SearchTracks).Methods("GET")
 
 	trackHandler := &handlers.TrackHandler{DB: db}
-	secured.HandleFunc("/tack/{id}", trackHandler.GetTrack).Methods("GET")
+	secured.HandleFunc("/track/{id}", trackHandler.GetTrack).Methods("GET")
 
 	commentHandler := &handlers.CommentHandler{DB: db, MongoDatabase: mongoDatabase}
 	secured.HandleFunc("comments/track/{id}", commentHandler.GetTrackComments).Methods("GET")
