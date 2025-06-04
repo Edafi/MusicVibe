@@ -26,11 +26,12 @@ func (handler *FavoritesHandler) GetFavoriteTracks(response http.ResponseWriter,
 	}
 
 	query := `
-		SELECT t.id, t.title, m.id, m.name, t.image_path, t.audio_path,
-		t.duration, t.plays, t.visibility
+		SELECT t.id, t.title, m.id, m.name, a.cover_path, t.file_path,
+		t.duration, t.stream_count, t.visibility
 		FROM liked_tracks lt
 		JOIN track t ON lt.track_id = t.id
 		JOIN musician m ON t.musician_id = m.id
+		JOIN album a ON t.album_id = a.id
 		WHERE lt.user_id = ?
 	`
 
@@ -42,7 +43,7 @@ func (handler *FavoritesHandler) GetFavoriteTracks(response http.ResponseWriter,
 	}
 	defer rows.Close()
 
-	var tracks []models.TrackResponse = make([]models.TrackResponse, 0)
+	var tracks []models.TrackResponse
 	for rows.Next() {
 		var track models.TrackResponse
 
@@ -112,7 +113,7 @@ func (handler *FavoritesHandler) GetFavoriteAlbums(response http.ResponseWriter,
 	}
 
 	query := `
-		SELECT a.id, a.title, a.image_path, YEAR(a.release_date), m.id, m.name
+		SELECT a.id, a.title, a.cover_path, YEAR(a.release_date), m.id, m.name
 		FROM liked_albums la
 		JOIN album a ON la.album_id = a.id
 		JOIN musician m ON a.musician_id = m.id
@@ -127,7 +128,7 @@ func (handler *FavoritesHandler) GetFavoriteAlbums(response http.ResponseWriter,
 	}
 	defer rows.Close()
 
-	var albums []models.AlbumPageResponse = make([]models.AlbumPageResponse, 0)
+	var albums []models.AlbumPageResponse
 	for rows.Next() {
 		var album models.AlbumPageResponse
 
