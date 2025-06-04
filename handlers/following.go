@@ -3,8 +3,10 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"log"
 	"net/http"
 
+	"github.com/Edafi/MusicVibe/middleware"
 	"github.com/Edafi/MusicVibe/models"
 	"github.com/gorilla/mux"
 )
@@ -15,7 +17,13 @@ type FollowingHandler struct {
 
 // Получить подписанных музыкантов
 func (handler *FollowingHandler) GetFollowingMusicians(response http.ResponseWriter, request *http.Request) {
-	userID := request.Context().Value("id").(string)
+	val := request.Context().Value(middleware.ContextUserIDKey)
+	userID, ok := val.(string)
+	if !ok {
+		log.Println("UserID not found in context")
+		http.Error(response, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
 	rows, err := handler.DB.Query(`
 		SELECT m.id, u.email, m.name, u.avatar_path, u.background_path, 
@@ -91,7 +99,14 @@ func (handler *FollowingHandler) GetFollowingMusicians(response http.ResponseWri
 
 // Подписаться
 func (handler *FollowingHandler) FollowMusician(response http.ResponseWriter, request *http.Request) {
-	userID := request.Context().Value("id").(string)
+	val := request.Context().Value(middleware.ContextUserIDKey)
+	userID, ok := val.(string)
+	if !ok {
+		log.Println("UserID not found in context")
+		http.Error(response, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	musicianID := mux.Vars(request)["musicianId"]
 
 	_, err := handler.DB.Exec("INSERT IGNORE INTO user_following (user_id, musician_id) VALUES (?, ?)", userID, musicianID)
@@ -105,7 +120,14 @@ func (handler *FollowingHandler) FollowMusician(response http.ResponseWriter, re
 
 // Отписаться
 func (handler *FollowingHandler) UnfollowMusician(response http.ResponseWriter, request *http.Request) {
-	userID := request.Context().Value("id").(string)
+	val := request.Context().Value(middleware.ContextUserIDKey)
+	userID, ok := val.(string)
+	if !ok {
+		log.Println("UserID not found in context")
+		http.Error(response, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	musicianID := mux.Vars(request)["musicianId"]
 
 	_, err := handler.DB.Exec("DELETE FROM user_following WHERE user_id = ? AND musician_id = ?", userID, musicianID)
