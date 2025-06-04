@@ -24,7 +24,7 @@ type CommentHandler struct {
 func (handler *CommentHandler) GetTrackComments(response http.ResponseWriter, request *http.Request) {
 	trackID := mux.Vars(request)["id"]
 
-	// 1. Получение комментариев из MongoDB
+	// Получение комментариев из MongoDB
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -39,7 +39,7 @@ func (handler *CommentHandler) GetTrackComments(response http.ResponseWriter, re
 	}
 	defer cursor.Close(ctx)
 
-	var results []models.CommentResponse
+	var results []models.CommentResponse = make([]models.CommentResponse, 0)
 
 	for cursor.Next(ctx) {
 		var comment struct {
@@ -55,7 +55,7 @@ func (handler *CommentHandler) GetTrackComments(response http.ResponseWriter, re
 			continue
 		}
 
-		// 2. Получение информации о пользователе из MariaDB
+		// Получение информации о пользователе из MariaDB
 		var user models.CommentAuthor
 		user.ID = comment.UserID
 
