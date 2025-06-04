@@ -14,6 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type CommentHandler struct {
@@ -31,7 +32,8 @@ func (handler *CommentHandler) GetTrackComments(response http.ResponseWriter, re
 	collection := handler.MongoDatabase.Collection("track_comments")
 
 	filter := bson.M{"track_id": trackID}
-	cursor, err := collection.Find(ctx, filter)
+	options := options.Find().SetSort(bson.D{{"created_at", -1}})
+	cursor, err := collection.Find(ctx, filter, options)
 	if err != nil {
 		log.Println("MongoDB error:", err)
 		http.Error(response, "Error fetching comments", http.StatusInternalServerError)
@@ -95,22 +97,43 @@ func (handler *CommentHandler) PostTrackComment(response http.ResponseWriter, re
 		return
 	}
 
+	createdAt := time.Now()
+
 	comment := models.TrackComment{
 		TrackID:   trackID,
 		UserID:    userID,
 		Comment:   req.Text,
-		CreatedAt: time.Now(),
+		CreatedAt: createdAt,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	_, err := handler.MongoDatabase.Collection("track_comments").InsertOne(ctx, comment)
+	result, err := handler.MongoDatabase.Collection("track_comments").InsertOne(ctx, comment)
 	if err != nil {
 		log.Println("PostTrackComment - Error inserting comment:", err)
 		http.Error(response, "Error saving comment", http.StatusInternalServerError)
 		return
 	}
 
+	var user models.CommentAuthor
+	user.ID = userID
+	query := `SELECT username, avatar_path FROM user WHERE id = ?`
+	err = handler.DB.QueryRow(query, userID).Scan(&user.Name, &user.AvatarURL)
+	if err != nil {
+		log.Println("SQL error for user", userID, ":", err)
+		user.Name = "Неизвестный пользователь"
+		user.AvatarURL = "/avatarUser/default.png"
+	}
+
+	commentResponse := models.CommentResponse{
+		ID:        result.InsertedID.(primitive.ObjectID).Hex(),
+		Text:      req.Text,
+		CreatedAt: createdAt,
+		User:      user,
+	}
+
+	response.Header().Set("Content-Type", "application/json")
 	response.WriteHeader(http.StatusCreated)
+	json.NewEncoder(response).Encode(commentResponse)
 }
