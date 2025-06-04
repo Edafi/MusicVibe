@@ -68,7 +68,7 @@ func (handler *FavoritesHandler) AddFavoriteTrack(response http.ResponseWriter, 
 		return
 	}
 
-	trackID := mux.Vars(request)["trackId"]
+	trackID := mux.Vars(request)["id"]
 
 	_, err := handler.DB.Exec(`INSERT IGNORE INTO liked_tracks (user_id, track_id) VALUES (?, ?)`, userID, trackID)
 	if err != nil {
@@ -90,7 +90,7 @@ func (handler *FavoritesHandler) DeleteFavoriteTrack(response http.ResponseWrite
 		return
 	}
 
-	trackID := mux.Vars(request)["trackId"]
+	trackID := mux.Vars(request)["id"]
 
 	_, err := handler.DB.Exec(`DELETE FROM liked_tracks WHERE user_id = ? AND track_id = ?`, userID, trackID)
 	if err != nil {
@@ -154,7 +154,7 @@ func (handler *FavoritesHandler) AddFavoriteAlbum(response http.ResponseWriter, 
 		return
 	}
 
-	albumID := mux.Vars(request)["albumId"]
+	albumID := mux.Vars(request)["id"]
 
 	_, err := handler.DB.Exec(`INSERT IGNORE INTO liked_albums (user_id, album_id) VALUES (?, ?)`, userID, albumID)
 	if err != nil {
@@ -176,7 +176,7 @@ func (handler *FavoritesHandler) DeleteFavoriteAlbum(response http.ResponseWrite
 		return
 	}
 
-	albumID := mux.Vars(request)["albumId"]
+	albumID := mux.Vars(request)["id"]
 
 	_, err := handler.DB.Exec(`DELETE FROM liked_albums WHERE user_id = ? AND album_id = ?`, userID, albumID)
 	if err != nil {
