@@ -59,7 +59,7 @@ func (handler *CommentHandler) GetTrackComments(response http.ResponseWriter, re
 		var user models.CommentAuthor
 		user.ID = comment.UserID
 
-		query := `SELECT name, avatar_path FROM user WHERE id = ?`
+		query := `SELECT username, avatar_path FROM user WHERE id = ?`
 		err := handler.DB.QueryRow(query, comment.UserID).Scan(&user.Name, &user.AvatarURL)
 		if err != nil {
 			log.Println("SQL error for user", comment.UserID, ":", err)
