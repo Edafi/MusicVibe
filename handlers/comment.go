@@ -96,7 +96,7 @@ func (handler *CommentHandler) PostTrackComment(response http.ResponseWriter, re
 	query := `SELECT m.id, m.avatar_path FROM musician AS m
 	JOIN user ON user.id = m.user_id
 	WHERE user.id = ?`
-	err := handler.DB.QueryRow(query, userID).Scan(musicianID, musician_avatar_path)
+	err := handler.DB.QueryRow(query, userID).Scan(&musicianID, &musician_avatar_path)
 	if err != nil {
 		log.Println("SQL error for user", userID, ":", err)
 	}
@@ -128,7 +128,7 @@ func (handler *CommentHandler) PostTrackComment(response http.ResponseWriter, re
 
 	var user models.CommentAuthor
 	user.ID = userID
-	query = `SELECT name, avatar_path FROM musician WHERE id = ?`
+	query = `SELECT name, avatar_path FROM musician WHERE musician.id = ?`
 	err = handler.DB.QueryRow(query, musicianID).Scan(&user.Name, &user.AvatarURL)
 	if err != nil {
 		log.Println("SQL error for user", userID, ":", err)
