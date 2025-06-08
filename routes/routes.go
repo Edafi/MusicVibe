@@ -33,6 +33,7 @@ func SetupRoutes(db *sql.DB, mongoDatabase *mongo.Database) http.Handler {
 	// обработчики музыкантов
 	musicianHandler := &handlers.MusicianHandler{DB: db}
 	secured.HandleFunc("/musicians", musicianHandler.GetMusicians).Methods("GET")
+	secured.HandleFunc("/user/following", musicianHandler.PostUserFollowing).Methods("POST")
 	secured.HandleFunc("/musician/{id}", musicianHandler.GetMusician).Methods("GET")
 	secured.HandleFunc("/musician/{id}/popular-tracks", musicianHandler.GetPopularTracks).Methods("GET")
 
