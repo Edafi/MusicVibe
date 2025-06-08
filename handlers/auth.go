@@ -50,9 +50,10 @@ func (handler *AuthHandler) Register(response http.ResponseWriter, request *http
 	id := uuid.New().String()
 	role := "user"
 	default_avatar_path := "/avatarUser/defaultAvatar.png"
+	default_background_path := "https://avatars.mds.yandex.net/i?id=2d0ed205049cd9c3b56db4cab9f02b9d_l-4255743-images-thumbs&n=13"
 
-	query := `INSERT INTO user (id, username, email, passwd_hash, role, has_complete_setup, avatar_path) VALUES (?, ?, ?, ?, ?, ?, ?)`
-	_, err = handler.DB.Exec(query, id, creds.Username, creds.Email, hashedPassword, role, false, "/avatarUser/defaultAvatar.png")
+	query := `INSERT INTO user (id, username, email, passwd_hash, role, has_complete_setup, avatar_path, background_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err = handler.DB.Exec(query, id, creds.Username, creds.Email, hashedPassword, role, false, default_avatar_path, default_background_path)
 	if err != nil {
 		log.Println("Insert error:", err)
 		http.Error(response, "Error inserting user", http.StatusInternalServerError)
