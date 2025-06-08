@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/Edafi/MusicVibe/middleware"
-	"github.com/Edafi/MusicVibe/models"
 	"github.com/gorilla/mux"
 )
 
@@ -26,36 +25,33 @@ func (handler *FavoritesHandler) GetFavoriteTracks(response http.ResponseWriter,
 	}
 
 	query := `
-		SELECT t.id, t.title, m.id, m.name, a.cover_path, t.file_path,
-		t.duration, t.stream_count, t.visibility
+		SELECT t.id
 		FROM liked_tracks lt
 		JOIN track t ON lt.track_id = t.id
-		JOIN musician m ON t.musician_id = m.id
-		JOIN album a ON t.album_id = a.id
 		WHERE lt.user_id = ?
 	`
 
 	rows, err := handler.DB.Query(query, userID)
 	if err != nil {
 		log.Println("GetFavoriteTracks - DB Query error:", err)
-		http.Error(response, "Failed to load favorite tracks", http.StatusInternalServerError)
+		http.Error(response, "Failed to load favorite track IDs", http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
 
-	var tracks []models.TrackResponse = make([]models.TrackResponse, 0)
+	var trackIDs []string
 	for rows.Next() {
-		var track models.TrackResponse
-
-		if err := rows.Scan(&track.ID, &track.Title, &track.ArtistID, &track.ArtistName,
-			&track.ImageURL, &track.AudioURL, &track.Duration, &track.Plays, &track.Visibility); err != nil {
+		var id string
+		if err := rows.Scan(&id); err != nil {
 			log.Println("GetFavoriteTracks - Row Scan error:", err)
-			http.Error(response, "Failed to parse track", http.StatusInternalServerError)
+			http.Error(response, "Failed to parse track ID", http.StatusInternalServerError)
 			return
 		}
-		tracks = append(tracks, track)
+		trackIDs = append(trackIDs, id)
 	}
-	json.NewEncoder(response).Encode(tracks)
+
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(trackIDs)
 }
 
 // Добавить трек в избранное
@@ -103,6 +99,7 @@ func (handler *FavoritesHandler) DeleteFavoriteTrack(response http.ResponseWrite
 }
 
 // Получить избранные альбомы
+
 func (handler *FavoritesHandler) GetFavoriteAlbums(response http.ResponseWriter, request *http.Request) {
 	val := request.Context().Value(middleware.ContextUserIDKey)
 	userID, ok := val.(string)
@@ -113,35 +110,33 @@ func (handler *FavoritesHandler) GetFavoriteAlbums(response http.ResponseWriter,
 	}
 
 	query := `
-		SELECT a.id, a.title, a.cover_path, YEAR(a.release_date), m.id, m.name
+		SELECT a.id
 		FROM liked_albums la
 		JOIN album a ON la.album_id = a.id
-		JOIN musician m ON a.musician_id = m.id
 		WHERE la.user_id = ?
 	`
 
 	rows, err := handler.DB.Query(query, userID)
 	if err != nil {
 		log.Println("GetFavoriteAlbums - DB Query error:", err)
-		http.Error(response, "Failed to load favorite albums", http.StatusInternalServerError)
+		http.Error(response, "Failed to load favorite album IDs", http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
 
-	var albums []models.AlbumPageResponse = make([]models.AlbumPageResponse, 0)
+	var albumIDs []string
 	for rows.Next() {
-		var album models.AlbumPageResponse
-
-		if err := rows.Scan(&album.ID, &album.Title, &album.CoverURL,
-			&album.Year, &album.ArtistID, &album.ArtistName); err != nil {
+		var id string
+		if err := rows.Scan(&id); err != nil {
 			log.Println("GetFavoriteAlbums - Row Scan error:", err)
-			http.Error(response, "Failed to parse album", http.StatusInternalServerError)
+			http.Error(response, "Failed to parse album ID", http.StatusInternalServerError)
 			return
 		}
-		albums = append(albums, album)
+		albumIDs = append(albumIDs, id)
 	}
 
-	json.NewEncoder(response).Encode(albums)
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(albumIDs)
 }
 
 // Добавить альбом в избранное
