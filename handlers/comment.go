@@ -58,22 +58,23 @@ func (handler *CommentHandler) GetTrackComments(response http.ResponseWriter, re
 		}
 
 		// Получение информации о пользователе из MariaDB
-		var user models.CommentAuthor
-		user.ID = comment.UserID
+		var musician models.CommentAuthor
+		musician.ID = comment.UserID
 
-		query := `SELECT username, avatar_path FROM user WHERE id = ?`
-		err := handler.DB.QueryRow(query, comment.UserID).Scan(&user.Name, &user.AvatarURL)
+		query := `SELECT name, avatar_path FROM musician
+		WHERE musician.id = ?`
+		err := handler.DB.QueryRow(query, comment.UserID).Scan(&musician.Name, &musician.AvatarURL)
 		if err != nil {
 			log.Println("SQL error for user", comment.UserID, ":", err)
-			user.Name = "Неизвестный пользователь"
-			user.AvatarURL = "/avatarUser/default.png"
+			musician.Name = "Неизвестный пользователь"
+			musician.AvatarURL = "/avatarUser/default.png"
 		}
 
 		results = append(results, models.CommentResponse{
 			ID:        comment.ID.Hex(),
 			Text:      comment.Comment,
 			CreatedAt: comment.CreatedAt,
-			User:      user,
+			User:      musician,
 		})
 	}
 

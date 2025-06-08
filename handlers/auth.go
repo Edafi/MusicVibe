@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -48,6 +49,7 @@ func (handler *AuthHandler) Register(response http.ResponseWriter, request *http
 
 	id := uuid.New().String()
 	role := "user"
+	default_avatar_path := "/avatarUser/defaultAvatar.png"
 
 	query := `INSERT INTO user (id, username, email, passwd_hash, role, has_complete_setup, avatar_path) VALUES (?, ?, ?, ?, ?, ?, ?)`
 	_, err = handler.DB.Exec(query, id, creds.Username, creds.Email, hashedPassword, role, false, "/avatarUser/defaultAvatar.png")
@@ -71,6 +73,15 @@ func (handler *AuthHandler) Register(response http.ResponseWriter, request *http
 	if err != nil {
 		log.Println("Token error:", err)
 		http.Error(response, "Error signing token", http.StatusInternalServerError)
+		return
+	}
+
+	musician_id := uuid.New().String()
+	query = `INSERT INTO musician (id, user_id, name, avatar_path, name_lower) VALUES (?, ?, ?, ?, ?)`
+	_, err = handler.DB.Exec(query, musician_id, claims.UserID, creds.Username, default_avatar_path, strings.ToLower(creds.Username))
+	if err != nil {
+		log.Println("Insert error:", err)
+		http.Error(response, "Error inserting user", http.StatusInternalServerError)
 		return
 	}
 
