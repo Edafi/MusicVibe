@@ -61,13 +61,22 @@ func (handler *CommentHandler) GetTrackComments(response http.ResponseWriter, re
 		var musician models.CommentAuthor
 		musician.ID = comment.UserID
 
-		query := `SELECT name, avatar_path FROM musician
-		WHERE musician.id = ?`
-		err := handler.DB.QueryRow(query, comment.UserID).Scan(&musician.Name, &musician.AvatarURL)
-		if err != nil {
-			log.Println("GetTrackComments - SQL error for user", comment.UserID, ":", err)
+		if comment.UserID == "" {
+			log.Println("GetTrackComments - пустой user_id")
 			musician.Name = "Неизвестный пользователь"
 			musician.AvatarURL = "/avatarUser/default.png"
+		} else {
+			query := `SELECT name, avatar_path FROM musician WHERE id = ?`
+			err := handler.DB.QueryRow(query, comment.UserID).Scan(&musician.Name, &musician.AvatarURL)
+			if err == sql.ErrNoRows {
+				log.Println("GetTrackComments - музыкант не найден:", comment.UserID)
+				musician.Name = "Неизвестный пользователь"
+				musician.AvatarURL = "/avatarUser/default.png"
+			} else if err != nil {
+				log.Println("GetTrackComments - SQL ошибка:", err)
+				musician.Name = "Неизвестный пользователь"
+				musician.AvatarURL = "/avatarUser/default.png"
+			}
 		}
 
 		results = append(results, models.CommentResponse{
