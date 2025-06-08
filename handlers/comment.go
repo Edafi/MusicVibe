@@ -93,7 +93,7 @@ func (handler *CommentHandler) PostTrackComment(response http.ResponseWriter, re
 	trackID := mux.Vars(request)["id"]
 
 	var musicianID, musician_avatar_path string
-	query := `SELECT id FROM musician
+	query := `SELECT m.id, m.avatar_path FROM musician AS m
 	JOIN user ON user.id = musician.user_id
 	WHERE user.id = ?`
 	err := handler.DB.QueryRow(query, userID).Scan(musicianID, musician_avatar_path)
