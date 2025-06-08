@@ -115,78 +115,6 @@ func (handler *MusicianHandler) GetMusicians(response http.ResponseWriter, reque
 	json.NewEncoder(response).Encode(musicians)
 }
 
-// --------------------- POST /user/following --------------------- //
-func (handler *MusicianHandler) PostUserFollowing(response http.ResponseWriter, request *http.Request) {
-	userID, ok := request.Context().Value(middleware.ContextUserIDKey).(string)
-	if !ok || userID == "" {
-		http.Error(response, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-
-	var payload struct {
-		MusicianIDs []string `json:"musicianIds"`
-	}
-
-	if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
-		log.Println("error decoding json:", err)
-		http.Error(response, "Invalid JSON", http.StatusBadRequest)
-		return
-	}
-
-	if len(payload.MusicianIDs) == 0 {
-		http.Error(response, "No musicians selected", http.StatusBadRequest)
-		return
-	}
-
-	tx, err := handler.DB.Begin()
-	if err != nil {
-		log.Println("Failed to begin transaction:", err)
-		http.Error(response, "Failed to begin transaction", http.StatusInternalServerError)
-		return
-	}
-	defer tx.Rollback()
-
-	stmt, err := tx.Prepare("INSERT INTO user_following (user_id, musician_id) VALUES (?, ?)")
-	if err != nil {
-		log.Println("Failed to prepare insert:", err)
-		http.Error(response, "Failed to prepare insert", http.StatusInternalServerError)
-		return
-	}
-	defer stmt.Close()
-
-	for _, musicianID := range payload.MusicianIDs {
-		log.Println("Following musicianID:", musicianID)
-		if _, err := stmt.Exec(userID, musicianID); err != nil {
-			log.Println("Failed to insert follow:", err)
-			http.Error(response, "Failed to insert follow", http.StatusInternalServerError)
-			return
-		}
-	}
-
-	updateStmt, err := tx.Prepare("UPDATE user SET has_complete_setup = 1 WHERE id = ?")
-
-	if err != nil {
-		log.Println("Failed to prepare update:", err)
-		http.Error(response, "Failed to prepare update", http.StatusInternalServerError)
-		return
-	}
-	defer updateStmt.Close()
-
-	if _, err := updateStmt.Exec(userID); err != nil {
-		log.Println("Failed to update user setup:", err)
-		http.Error(response, "Failed to update user setup", http.StatusInternalServerError)
-		return
-	}
-
-	if err := tx.Commit(); err != nil {
-		log.Println("Failed to commit transaction:", err)
-		http.Error(response, "Failed to commit transaction", http.StatusInternalServerError)
-		return
-	}
-
-	response.WriteHeader(http.StatusCreated)
-}
-
 // GET /musician/&{id}
 func (handler *MusicianHandler) GetMusician(w http.ResponseWriter, r *http.Request) {
 	musicianID := mux.Vars(r)["id"]
@@ -210,7 +138,7 @@ func (handler *MusicianHandler) GetMusician(w http.ResponseWriter, r *http.Reque
 	}
 
 	// Получаем жанры
-	genres := []string{}
+	var genres []string = make([]string, 0)
 	rows, err := handler.DB.Query(`
 		SELECT g.name
 		FROM genre g
@@ -231,7 +159,7 @@ func (handler *MusicianHandler) GetMusician(w http.ResponseWriter, r *http.Reque
 	musician.Genres = genres
 
 	// Получаем социальные сети пользователя
-	socialLinks := []models.SocialLink{}
+	var socialLinks []models.SocialLink = make([]models.SocialLink, 0)
 	rows, err = handler.DB.Query(`
 		SELECT sn.name, usn.profile_url
 		FROM user_social_network usn
@@ -276,7 +204,7 @@ func (handler *MusicianHandler) GetMusician(w http.ResponseWriter, r *http.Reque
 	}
 	defer albumRows.Close()
 
-	albums := []models.AlbumPreview{}
+	var albums []models.AlbumPreview = make([]models.AlbumPreview, 0)
 	for albumRows.Next() {
 		var album models.AlbumPreview
 		var albumID string
@@ -338,7 +266,7 @@ func (handler *MusicianHandler) GetPopularTracks(response http.ResponseWriter, r
 	}
 	defer rows.Close()
 
-	var tracks []models.TrackResponse
+	var tracks []models.TrackResponse = make([]models.TrackResponse, 0)
 	for rows.Next() {
 		var t models.TrackResponse
 		err := rows.Scan(&t.ID, &t.ArtistID, &t.Title, &t.Duration, &t.AudioURL,
