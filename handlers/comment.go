@@ -92,6 +92,15 @@ func (handler *CommentHandler) PostTrackComment(response http.ResponseWriter, re
 	userID := request.Context().Value(middleware.ContextUserIDKey).(string)
 	trackID := mux.Vars(request)["id"]
 
+	var musicianID, musician_avatar_path string
+	query := `SELECT id FROM musician
+	JOIN user ON user.id = musician.user_id
+	WHERE user.id = ?`
+	err := handler.DB.QueryRow(query, userID).Scan(musicianID, musician_avatar_path)
+	if err != nil {
+		log.Println("SQL error for user", userID, ":", err)
+	}
+
 	var req models.CreateCommentRequest
 	if err := json.NewDecoder(request.Body).Decode(&req); err != nil {
 		http.Error(response, "Invalid input", http.StatusBadRequest)
@@ -102,7 +111,7 @@ func (handler *CommentHandler) PostTrackComment(response http.ResponseWriter, re
 
 	comment := models.TrackComment{
 		TrackID:   trackID,
-		UserID:    userID,
+		UserID:    musicianID,
 		Comment:   req.Text,
 		CreatedAt: createdAt,
 	}
@@ -119,8 +128,8 @@ func (handler *CommentHandler) PostTrackComment(response http.ResponseWriter, re
 
 	var user models.CommentAuthor
 	user.ID = userID
-	query := `SELECT username, avatar_path FROM user WHERE id = ?`
-	err = handler.DB.QueryRow(query, userID).Scan(&user.Name, &user.AvatarURL)
+	query = `SELECT name, avatar_path FROM musician WHERE id = ?`
+	err = handler.DB.QueryRow(query, musicianID).Scan(&user.Name, &user.AvatarURL)
 	if err != nil {
 		log.Println("SQL error for user", userID, ":", err)
 		user.Name = "Неизвестный пользователь"
