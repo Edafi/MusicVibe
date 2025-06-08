@@ -39,7 +39,7 @@ func (handler *FavoritesHandler) GetFavoriteTracks(response http.ResponseWriter,
 	}
 	defer rows.Close()
 
-	var trackIDs []string
+	var trackIDs []string = make([]string, 0)
 	for rows.Next() {
 		var id string
 		if err := rows.Scan(&id); err != nil {
@@ -124,7 +124,7 @@ func (handler *FavoritesHandler) GetFavoriteAlbums(response http.ResponseWriter,
 	}
 	defer rows.Close()
 
-	var albumIDs []string
+	var albumIDs []string = make([]string, 0)
 	for rows.Next() {
 		var id string
 		if err := rows.Scan(&id); err != nil {
