@@ -65,7 +65,7 @@ func (handler *CommentHandler) GetTrackComments(response http.ResponseWriter, re
 		WHERE musician.id = ?`
 		err := handler.DB.QueryRow(query, comment.UserID).Scan(&musician.Name, &musician.AvatarURL)
 		if err != nil {
-			log.Println("SQL error for user", comment.UserID, ":", err)
+			log.Println("GetTrackComments - SQL error for user", comment.UserID, ":", err)
 			musician.Name = "Неизвестный пользователь"
 			musician.AvatarURL = "/avatarUser/default.png"
 		}
@@ -98,7 +98,7 @@ func (handler *CommentHandler) PostTrackComment(response http.ResponseWriter, re
 	WHERE user.id = ?`
 	err := handler.DB.QueryRow(query, userID).Scan(&musicianID, &musician_avatar_path)
 	if err != nil {
-		log.Println("SQL error for user", userID, ":", err)
+		log.Println("PostTrackComment 1 - SQL error for user", userID, ":", err)
 	}
 
 	var req models.CreateCommentRequest
@@ -131,7 +131,7 @@ func (handler *CommentHandler) PostTrackComment(response http.ResponseWriter, re
 	query = `SELECT name, avatar_path FROM musician WHERE musician.id = ?`
 	err = handler.DB.QueryRow(query, musicianID).Scan(&user.Name, &user.AvatarURL)
 	if err != nil {
-		log.Println("SQL error for user", userID, ":", err)
+		log.Println("PostTrackComment 2 - SQL error for user", userID, ":", err)
 		user.Name = "Неизвестный пользователь"
 		user.AvatarURL = "/avatarUser/default.png"
 	}
