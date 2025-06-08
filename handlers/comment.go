@@ -94,7 +94,7 @@ func (handler *CommentHandler) PostTrackComment(response http.ResponseWriter, re
 
 	var musicianID, musician_avatar_path string
 	query := `SELECT m.id, m.avatar_path FROM musician AS m
-	JOIN user ON user.id = musician.user_id
+	JOIN user ON user.id = m.user_id
 	WHERE user.id = ?`
 	err := handler.DB.QueryRow(query, userID).Scan(musicianID, musician_avatar_path)
 	if err != nil {
