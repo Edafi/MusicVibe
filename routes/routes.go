@@ -84,6 +84,9 @@ func SetupRoutes(db *sql.DB, mongoDatabase *mongo.Database, minioClient *minio.C
 	uploadHandler := &handlers.UploadHandler{DB: db, MinioClient: minioClient}
 	secured.HandleFunc("/upload/album", uploadHandler.UploadAlbum).Methods("POST")
 
+	mediaHandler := &handlers.MediaHandler{MinioClient: minioClient, BucketName: "your-bucket-name"}
+	secured.HandleFunc("/media/audio/{trackId}", mediaHandler.ServeAudio).Methods("GET")
+	secured.HandleFunc("/media/image/{filename}", mediaHandler.ServeImage).Methods("GET")
 	// CORS
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
