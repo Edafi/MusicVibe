@@ -70,7 +70,6 @@ func (h *MediaHandler) ServeImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Файл должен иметь .jpg
 	if !strings.HasSuffix(filename, ".jpg") {
 		filename += ".jpg"
 	}
@@ -87,13 +86,20 @@ func (h *MediaHandler) ServeImage(w http.ResponseWriter, r *http.Request) {
 
 	objectPath := fmt.Sprintf("musician_%s/cover/%s", musicianID, filename)
 
-	obj, err := h.MinioClient.GetObject(context.Background(), h.BucketName, objectPath, minio.GetObjectOptions{})
+	obj, err := h.MinioClient.GetObject(r.Context(), h.BucketName, objectPath, minio.GetObjectOptions{})
 	if err != nil {
 		log.Println("ServeImage: error getting object:", err)
 		http.Error(w, "Image not found", http.StatusNotFound)
 		return
 	}
 	defer obj.Close()
+
+	// Проверяем, что объект существует
+	if _, err := obj.Stat(); err != nil {
+		log.Println("ServeImage: object stat failed:", err)
+		http.Error(w, "Image not found", http.StatusNotFound)
+		return
+	}
 
 	w.Header().Set("Content-Type", "image/jpeg")
 	io.Copy(w, obj)
