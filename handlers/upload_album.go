@@ -5,9 +5,11 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"mime/multipart"
 	"net/http"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -21,6 +23,21 @@ import (
 type UploadHandler struct {
 	DB          *sql.DB
 	MinioClient *minio.Client
+}
+
+func saveTempFile(file multipart.File, filename string) (string, error) {
+	tmpfile, err := os.CreateTemp("", filename)
+	if err != nil {
+		return "", err
+	}
+	defer tmpfile.Close()
+
+	_, err = io.Copy(tmpfile, file)
+	if err != nil {
+		return "", err
+	}
+
+	return tmpfile.Name(), nil
 }
 
 func getAudioDuration(filePath string) (int, error) {
@@ -166,7 +183,15 @@ func (handler *UploadHandler) UploadAlbum(response http.ResponseWriter, request 
 			continue
 		}
 
-		duration, err := getAudioDuration(audioPath)
+		audioFile.Seek(0, 0)
+		tmpPath, err := saveTempFile(audioFile, "audio_*.mp3")
+		if err != nil {
+			log.Println("Failed to save temp audio file:", err)
+			continue
+		}
+		defer os.Remove(tmpPath) // удаляем временный файл позже
+
+		duration, err := getAudioDuration(tmpPath)
 		if err != nil {
 			log.Println("Failed to get duration of the track:", err)
 			continue
