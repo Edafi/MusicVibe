@@ -28,15 +28,16 @@ func (h *MediaHandler) ServeAudio(w http.ResponseWriter, r *http.Request) {
 
 	// 1. Получаем musician_id из БД
 	var musicianID string
-	log.Println("Trying to fetch albumID:", musicianID)
+	log.Println("Trying to fetch musicianID for track:", trackID)
 	err := h.DB.QueryRow("SELECT musician_id FROM track WHERE id = ?", trackID).Scan(&musicianID)
 	if err != nil {
 		log.Println("ServeAudio: failed to get musician_id for album", musicianID, "error:", err)
 		http.Error(w, "Track not found", http.StatusNotFound)
 		return
 	}
+	log.Println("Found musicianID:", musicianID)
 
-	objectName := fmt.Sprintf("musician_%s/tracks/track_%s", musicianID, trackID)
+	objectName := fmt.Sprintf("musician_%s/tracks/track_%s.mp3", musicianID, trackID)
 
 	// 2. Достаём из MinIO
 	obj, err := h.MinioClient.GetObject(context.Background(), h.BucketName, objectName, minio.GetObjectOptions{})
