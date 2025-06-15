@@ -176,7 +176,7 @@ func (handler *UploadHandler) UploadAlbum(response http.ResponseWriter, request 
 
 		trackID := uuid.New().String()
 
-		objectName := fmt.Sprintf("musician_%s/tracks/track_%s_%s", musicianID, trackID, audioFileHeader.Filename)
+		objectName := fmt.Sprintf("musician_%s/tracks/track_%s", musicianID, trackID)
 		audioPath, err := uploadToMinIO(handler.MinioClient, bucketName, objectName, audioFile, audioFileHeader.Size, audioFileHeader.Header.Get("Content-Type"))
 		if err != nil {
 			log.Println("Failed to upload audio:", err)
