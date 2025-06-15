@@ -19,6 +19,12 @@ type MediaHandler struct {
 
 // GET /media/audio/{trackId}
 func (h *MediaHandler) ServeAudio(response http.ResponseWriter, request *http.Request) {
+	userID, ok := request.Context().Value("userID").(string)
+	if !ok || userID == "" {
+		http.Error(response, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	trackID := mux.Vars(request)["trackId"]
 	if trackID == "" {
 		http.Error(response, "Missing track ID", http.StatusBadRequest)
@@ -50,6 +56,12 @@ func (h *MediaHandler) ServeAudio(response http.ResponseWriter, request *http.Re
 
 // GET /media/image/{filename}
 func (h *MediaHandler) ServeImage(response http.ResponseWriter, request *http.Request) {
+	userID, ok := request.Context().Value("userID").(string)
+	if !ok || userID == "" {
+		http.Error(response, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	filename := mux.Vars(request)["filename"]
 	if filename == "" {
 		http.Error(response, "Missing filename", http.StatusBadRequest)
