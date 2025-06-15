@@ -3,10 +3,8 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
-	"path/filepath"
 
 	"github.com/Edafi/MusicVibe/middleware"
 	"github.com/Edafi/MusicVibe/models"
@@ -199,8 +197,8 @@ func (handler *HomeHandler) GetHomeRecommendedTracks(response http.ResponseWrite
 			http.Error(response, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		tr.AudioURL = fmt.Sprintf("/media/audio/%s", tr.ID)
-		tr.ImageURL = fmt.Sprintf("/media/image/%s", filepath.Base(tr.ImageURL))
+		//tr.AudioURL = fmt.Sprintf("/media/audio/%s", tr.ID)
+		//tr.ImageURL = fmt.Sprintf("/media/image/%s", filepath.Base(tr.ImageURL))
 		tracks = append(tracks, tr)
 	}
 
