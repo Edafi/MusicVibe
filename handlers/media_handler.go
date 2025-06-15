@@ -31,15 +31,21 @@ func (h *MediaHandler) ServeAudio(w http.ResponseWriter, r *http.Request) {
 	log.Println("Trying to fetch musicianID for track:", trackID)
 	err := h.DB.QueryRow("SELECT musician_id FROM track WHERE id = ?", trackID).Scan(&musicianID)
 	if err != nil {
-		log.Println("ServeAudio: failed to get musician_id for album", musicianID, "error:", err)
+		log.Println("ServeAudio: failed to get musician_id:", err)
 		http.Error(w, "Track not found", http.StatusNotFound)
 		return
 	}
 	log.Println("Found musicianID:", musicianID)
 
-	objectName := fmt.Sprintf("musician_%s/tracks/track_%s.mp3", musicianID, trackID)
+	// 2. Увеличиваем счетчик прослушиваний
+	_, err = h.DB.Exec("UPDATE track SET stream_count = stream_count + 1 WHERE id = ?", trackID)
+	if err != nil {
+		log.Println("ServeAudio: failed to increment stream count:", err)
+		// Не прерываем выполнение, просто логируем ошибку
+	}
 
-	// 2. Достаём из MinIO
+	// 3. Достаём аудио из MinIO
+	objectName := fmt.Sprintf("musician_%s/tracks/track_%s.mp3", musicianID, trackID)
 	obj, err := h.MinioClient.GetObject(context.Background(), h.BucketName, objectName, minio.GetObjectOptions{})
 	if err != nil {
 		log.Println("ServeAudio: error getting object:", err)
