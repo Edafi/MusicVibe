@@ -63,8 +63,6 @@ func (handler *HomeHandler) GetRecommendedTracks(response http.ResponseWriter, r
 			http.Error(response, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		tr.AudioURL = fmt.Sprintf("/media/audio/%s", tr.ID)
-		tr.ImageURL = fmt.Sprintf("/media/image/%s", filepath.Base(tr.ImageURL))
 		tracks = append(tracks, tr)
 	}
 
@@ -201,6 +199,8 @@ func (handler *HomeHandler) GetHomeRecommendedTracks(response http.ResponseWrite
 			http.Error(response, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		tr.AudioURL = fmt.Sprintf("/media/audio/%s", tr.ID)
+		tr.ImageURL = fmt.Sprintf("/media/image/%s", filepath.Base(tr.ImageURL))
 		tracks = append(tracks, tr)
 	}
 
