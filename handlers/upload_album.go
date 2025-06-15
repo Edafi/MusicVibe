@@ -23,6 +23,7 @@ func uploadToMinIO(client *minio.Client, bucketName, objectName string, file mul
 		ContentType: contentType,
 	})
 	if err != nil {
+		log.Fatal("uploadToMinIO: ", err)
 		return "", err
 	}
 	return fmt.Sprintf("/%s/%s", bucketName, objectName), nil
@@ -31,45 +32,52 @@ func uploadToMinIO(client *minio.Client, bucketName, objectName string, file mul
 func (handler *UploadHandler) UploadAlbum(response http.ResponseWriter, request *http.Request) {
 	err := request.ParseMultipartForm(50 << 20) // 50MB
 	if err != nil {
+		log.Fatal("UploadAlbum: ", err)
 		http.Error(response, "Cannot parse multipart form", http.StatusBadRequest)
 		return
 	}
 
-	// Парсим описание альбома
+	// Парсим поля
 	albumTitle := request.FormValue("albumTitle")
 	albumDescription := request.FormValue("albumDescription")
 	genreName := request.FormValue("genre")
-	userID := request.FormValue("userId") // кто загружает
+	userID := request.FormValue("userId")
 
 	// Обложка
 	coverFile, coverHeader, err := request.FormFile("cover")
 	if err != nil {
+		log.Fatal("UploadAlbum: ", err)
 		http.Error(response, "Missing cover file", http.StatusBadRequest)
 		return
 	}
 	defer coverFile.Close()
 
-	// Найдём genre_id
+	// Genre
 	var genreID int
 	err = handler.DB.QueryRow(`SELECT id FROM genre WHERE name = ?`, genreName).Scan(&genreID)
 	if err != nil {
+		log.Fatal("UploadAlbum: ", err)
 		http.Error(response, "Invalid genre", http.StatusBadRequest)
 		return
 	}
 
-	// Получим musician_id
+	// Musician
 	var musicianID string
 	err = handler.DB.QueryRow(`SELECT id FROM musician WHERE user_id = ?`, userID).Scan(&musicianID)
 	if err != nil {
+		log.Fatal("UploadAlbum: ", err)
 		http.Error(response, "Musician not found", http.StatusBadRequest)
 		return
 	}
 
 	albumID := uuid.New().String()
-	coverObject := fmt.Sprintf("cover/%s_%s", albumID, coverHeader.Filename)
+	bucketName := "music"
 
-	coverPath, err := uploadToMinIO(handler.MinioClient, "music", coverObject, coverFile, coverHeader.Size, coverHeader.Header.Get("Content-Type"))
+	// Путь к обложке: musician_{id}/cover/album_{id}.jpg
+	coverObject := fmt.Sprintf("musician_%s/cover/album_%s_%s", musicianID, albumID, coverHeader.Filename)
+	coverPath, err := uploadToMinIO(handler.MinioClient, bucketName, coverObject, coverFile, coverHeader.Size, coverHeader.Header.Get("Content-Type"))
 	if err != nil {
+		log.Fatal("UploadAlbum: ", err)
 		http.Error(response, "Failed to upload cover", http.StatusInternalServerError)
 		return
 	}
@@ -80,14 +88,15 @@ func (handler *UploadHandler) UploadAlbum(response http.ResponseWriter, request 
 		VALUES (?, ?, ?, ?, ?, ?)`,
 		albumID, musicianID, albumTitle, coverPath, genreID, albumDescription)
 	if err != nil {
+		log.Fatal("UploadAlbum: ", err)
 		http.Error(response, "Failed to insert album", http.StatusInternalServerError)
 		return
 	}
 
 	// Обрабатываем треки
 	form := request.MultipartForm
-	trackTitles := form.Value["trackTitle"] // массив названий треков
-	trackFiles := form.File["trackAudio"]   // массив файлов
+	trackTitles := form.Value["trackTitle"]
+	trackFiles := form.File["trackAudio"]
 
 	for i := range trackTitles {
 		title := trackTitles[i]
@@ -95,26 +104,28 @@ func (handler *UploadHandler) UploadAlbum(response http.ResponseWriter, request 
 
 		audioFile, err := audioFileHeader.Open()
 		if err != nil {
+			log.Fatal("UploadAlbum: ", err)
 			log.Println("Failed to open audio:", err)
 			continue
 		}
 		defer audioFile.Close()
 
-		objectName := fmt.Sprintf("track/%s_%s", uuid.New().String(), audioFileHeader.Filename)
+		trackID := uuid.New().String()
 
-		audioPath, err := uploadToMinIO(handler.MinioClient, "music", objectName, audioFile, audioFileHeader.Size, audioFileHeader.Header.Get("Content-Type"))
+		// Путь к треку: musician_{id}/tracks/track_{id}_название.mp3
+		objectName := fmt.Sprintf("musician_%s/tracks/track_%s_%s", musicianID, trackID, audioFileHeader.Filename)
+		audioPath, err := uploadToMinIO(handler.MinioClient, bucketName, objectName, audioFile, audioFileHeader.Size, audioFileHeader.Header.Get("Content-Type"))
 		if err != nil {
 			log.Println("Failed to upload audio:", err)
 			continue
 		}
-
-		trackID := uuid.New().String()
 
 		_, err = handler.DB.Exec(`
 			INSERT INTO track (id, title, album_id, musician_id, file_path, genre_id)
 			VALUES (?, ?, ?, ?, ?, ?)`,
 			trackID, title, albumID, musicianID, audioPath, genreID)
 		if err != nil {
+			log.Fatal("UploadAlbum: ", err)
 			log.Println("Failed to insert track:", err)
 			continue
 		}

@@ -15,6 +15,23 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+func EnsureMusicBucket(client *minio.Client) {
+	const bucketName = "music"
+	exists, err := client.BucketExists(context.Background(), bucketName)
+	if err != nil {
+		log.Fatalf("Failed to check bucket: %v", err)
+	}
+	if !exists {
+		err := client.MakeBucket(context.Background(), bucketName, minio.MakeBucketOptions{})
+		if err != nil {
+			log.Fatalf("Failed to create bucket: %v", err)
+		}
+		log.Println("Bucket 'music' created")
+	} else {
+		log.Println("Bucket 'music' already exists")
+	}
+}
+
 func InitMongoDB() (*mongo.Database, error) {
 	clientOptions := options.Client().ApplyURI("mongodb://username:password@localhost:27017")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -67,6 +84,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	EnsureMusicBucket(minioClient)
 
 	handler := routes.SetupRoutes(db, mongoDatabase, minioClient)
 	log.Println("Server running on :8080")
