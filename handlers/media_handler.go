@@ -28,9 +28,10 @@ func (h *MediaHandler) ServeAudio(w http.ResponseWriter, r *http.Request) {
 
 	// 1. Получаем musician_id из БД
 	var musicianID string
+	log.Println("Trying to fetch albumID:", musicianID)
 	err := h.DB.QueryRow("SELECT musician_id FROM track WHERE id = ?", trackID).Scan(&musicianID)
 	if err != nil {
-		log.Println("ServeAudio: failed to get musician_id:", err)
+		log.Println("ServeAudio: failed to get musician_id for album", musicianID, "error:", err)
 		http.Error(w, "Track not found", http.StatusNotFound)
 		return
 	}
