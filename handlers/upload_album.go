@@ -133,10 +133,18 @@ func (handler *UploadHandler) UploadAlbum(response http.ResponseWriter, request 
 
 	// Обрабатываем треки
 	form := request.MultipartForm
-	trackTitles := form.Value["trackTitle"]
-	trackFiles := form.File["trackAudio"]
+
+	trackTitles := form.Value["trackTitles[]"]
+	trackFiles := form.File["trackFiles[]"]
+
 	log.Println("trackTitles:", trackTitles)
 	log.Println("trackFiles:", trackFiles)
+
+	if len(trackTitles) != len(trackFiles) {
+		log.Println("Количество названий треков не совпадает с количеством файлов")
+		http.Error(w, "Invalid track data", http.StatusBadRequest)
+		return
+	}
 
 	for i := range trackTitles {
 		title := trackTitles[i]
@@ -144,7 +152,6 @@ func (handler *UploadHandler) UploadAlbum(response http.ResponseWriter, request 
 
 		audioFile, err := audioFileHeader.Open()
 		if err != nil {
-			log.Println("UploadAlbum: ", err)
 			log.Println("Failed to open audio:", err)
 			continue
 		}
@@ -152,7 +159,6 @@ func (handler *UploadHandler) UploadAlbum(response http.ResponseWriter, request 
 
 		trackID := uuid.New().String()
 
-		// Путь к треку: musician_{id}/tracks/track_{id}_название.mp3
 		objectName := fmt.Sprintf("musician_%s/tracks/track_%s_%s", musicianID, trackID, audioFileHeader.Filename)
 		audioPath, err := uploadToMinIO(handler.MinioClient, bucketName, objectName, audioFile, audioFileHeader.Size, audioFileHeader.Header.Get("Content-Type"))
 		if err != nil {
@@ -165,14 +171,13 @@ func (handler *UploadHandler) UploadAlbum(response http.ResponseWriter, request 
 			log.Println("Failed to get duration of the track:", err)
 			continue
 		}
-		streamCount := 0
-		visibility := "public"
-		titleLower := strings.ToLower(title)
 
+		titleLower := strings.ToLower(title)
 		_, err = handler.DB.Exec(`
 			INSERT INTO track (id, title, album_id, musician_id, file_path, genre_id, duration, stream_count, visibility, title_lower)
 			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-			trackID, title, albumID, musicianID, audioPath, genreID, duration, streamCount, visibility, titleLower)
+			trackID, title, albumID, musicianID, audioPath, genreID, duration, 0, "public", titleLower,
+		)
 		if err != nil {
 			log.Println("Failed to insert track:", err)
 			continue
