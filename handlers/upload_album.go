@@ -135,6 +135,8 @@ func (handler *UploadHandler) UploadAlbum(response http.ResponseWriter, request 
 	form := request.MultipartForm
 	trackTitles := form.Value["trackTitle"]
 	trackFiles := form.File["trackAudio"]
+	log.Println("trackTitles:", trackTitles)
+	log.Println("trackFiles:", trackFiles)
 
 	for i := range trackTitles {
 		title := trackTitles[i]
