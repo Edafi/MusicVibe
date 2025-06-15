@@ -188,8 +188,8 @@ func (handler *MusicianHandler) PostUserFollowing(response http.ResponseWriter, 
 }
 
 // GET /musician/&{id}
-func (handler *MusicianHandler) GetMusician(w http.ResponseWriter, r *http.Request) {
-	musicianID := mux.Vars(r)["id"]
+func (handler *MusicianHandler) GetMusician(response http.ResponseWriter, request *http.Request) {
+	musicianID := mux.Vars(request)["id"]
 
 	var musician models.Musician
 
@@ -205,7 +205,7 @@ func (handler *MusicianHandler) GetMusician(w http.ResponseWriter, r *http.Reque
 	)
 	if err != nil {
 		log.Println("GetMusician - Musician not found: ", err)
-		http.Error(w, "Musician not found", http.StatusNotFound)
+		http.Error(response, "Musician not found", http.StatusNotFound)
 		return
 	}
 
@@ -219,7 +219,7 @@ func (handler *MusicianHandler) GetMusician(w http.ResponseWriter, r *http.Reque
 	`, musicianID)
 	if err != nil {
 		log.Println("GetMusician - Error getting genres: ", err)
-		http.Error(w, "Error getting genres", http.StatusInternalServerError)
+		http.Error(response, "Error getting genres", http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
@@ -240,7 +240,7 @@ func (handler *MusicianHandler) GetMusician(w http.ResponseWriter, r *http.Reque
 	`, musician.UserID)
 	if err != nil {
 		log.Println("GetMusician - Error getting social links: ", err)
-		http.Error(w, "Error getting social links", http.StatusInternalServerError)
+		http.Error(response, "Error getting social links", http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
@@ -259,7 +259,7 @@ func (handler *MusicianHandler) GetMusician(w http.ResponseWriter, r *http.Reque
 	`, musicianID).Scan(&musician.Auditions)
 	if err != nil {
 		log.Println("GetMusician - Error getting auditions: ", err)
-		http.Error(w, "Error getting auditions", http.StatusInternalServerError)
+		http.Error(response, "Error getting auditions", http.StatusInternalServerError)
 		return
 	}
 
@@ -271,7 +271,7 @@ func (handler *MusicianHandler) GetMusician(w http.ResponseWriter, r *http.Reque
 	`, musicianID)
 	if err != nil {
 		log.Println("GetMusician - Error getting albums: ", err)
-		http.Error(w, "Error getting albums", http.StatusInternalServerError)
+		http.Error(response, "Error getting albums", http.StatusInternalServerError)
 		return
 	}
 	defer albumRows.Close()
@@ -283,7 +283,7 @@ func (handler *MusicianHandler) GetMusician(w http.ResponseWriter, r *http.Reque
 		err := albumRows.Scan(&albumID, &album.Title, &album.Year, &album.CoverUrl, &album.Description)
 		if err != nil {
 			log.Println("GetMusician - Error scanning album: ", err)
-			http.Error(w, "Error scanning album", http.StatusInternalServerError)
+			http.Error(response, "Error scanning album", http.StatusInternalServerError)
 			return
 		}
 		album.ID = albumID
@@ -295,7 +295,7 @@ func (handler *MusicianHandler) GetMusician(w http.ResponseWriter, r *http.Reque
 		`, albumID)
 		if err != nil {
 			log.Println("GetMusician - Error getting tracks: ", err)
-			http.Error(w, "Error getting tracks", http.StatusInternalServerError)
+			http.Error(response, "Error getting tracks", http.StatusInternalServerError)
 			return
 		}
 		for trackRows.Next() {
@@ -311,8 +311,8 @@ func (handler *MusicianHandler) GetMusician(w http.ResponseWriter, r *http.Reque
 	musician.Albums = albums
 
 	// Возвращаем JSON
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(musician)
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(musician)
 }
 
 // GET /musician/{id}/popular-tracks

@@ -9,6 +9,7 @@ import (
 	"mime/multipart"
 	"net/http"
 
+	"github.com/Edafi/MusicVibe/middleware"
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
 )
@@ -30,6 +31,12 @@ func uploadToMinIO(client *minio.Client, bucketName, objectName string, file mul
 }
 
 func (handler *UploadHandler) UploadAlbum(response http.ResponseWriter, request *http.Request) {
+	userID, ok := request.Context().Value(middleware.ContextUserIDKey).(string)
+	if !ok || userID == "" {
+		http.Error(response, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	err := request.ParseMultipartForm(50 << 20) // 50MB
 	if err != nil {
 		log.Println("UploadAlbum: ", err)
@@ -43,7 +50,6 @@ func (handler *UploadHandler) UploadAlbum(response http.ResponseWriter, request 
 	albumTitle := request.FormValue("albumTitle")
 	albumDescription := request.FormValue("albumDescription")
 	genreName := request.FormValue("genre")
-	userID := request.FormValue("userId")
 
 	// Обложка
 	coverFile, coverHeader, err := request.FormFile("cover")
@@ -55,10 +61,10 @@ func (handler *UploadHandler) UploadAlbum(response http.ResponseWriter, request 
 	}
 	defer coverFile.Close()
 
-	fmt.Println("Album:", albumTitle)
-	fmt.Println("Genre:", genreName)
-	fmt.Println("Cover filename:", coverHeader.Filename)
-	fmt.Println("user_id:", userID)
+	log.Println("Album:", albumTitle)
+	log.Println("Genre:", genreName)
+	log.Println("Cover filename:", coverHeader.Filename)
+	log.Println("user_id:", userID)
 
 	// Genre
 	var genreID int
