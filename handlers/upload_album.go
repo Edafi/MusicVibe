@@ -123,6 +123,12 @@ func (handler *UploadHandler) UploadAlbum(response http.ResponseWriter, request 
 		return
 	}
 
+	_, err = handler.DB.Exec(`INSERT IGNORE INTO musician_genre (musician_id, genre_id)
+    	VALUES (?, ?)`, musicianID, genreID)
+	if err != nil {
+		log.Println("UploadAlbum: failed to insert into musician_genre:", err)
+	}
+
 	albumID := uuid.New().String()
 	bucketName := "music"
 
