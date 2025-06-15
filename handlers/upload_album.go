@@ -142,7 +142,7 @@ func (handler *UploadHandler) UploadAlbum(response http.ResponseWriter, request 
 
 	if len(trackTitles) != len(trackFiles) {
 		log.Println("Количество названий треков не совпадает с количеством файлов")
-		http.Error(w, "Invalid track data", http.StatusBadRequest)
+		http.Error(response, "Invalid track data", http.StatusBadRequest)
 		return
 	}
 
