@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"io"
 	"log"
@@ -15,72 +16,92 @@ import (
 type MediaHandler struct {
 	MinioClient *minio.Client
 	BucketName  string
+	DB          *sql.DB
 }
 
-// GET /media/audio/{trackId}
-func (h *MediaHandler) ServeAudio(response http.ResponseWriter, request *http.Request) {
-	userID, ok := request.Context().Value("userID").(string)
-	if !ok || userID == "" {
-		http.Error(response, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-
-	trackID := mux.Vars(request)["trackId"]
+func (h *MediaHandler) ServeAudio(w http.ResponseWriter, r *http.Request) {
+	trackID := mux.Vars(r)["trackId"]
 	if trackID == "" {
-		http.Error(response, "Missing track ID", http.StatusBadRequest)
+		http.Error(w, "Missing track ID", http.StatusBadRequest)
 		return
 	}
 
-	objectName := fmt.Sprintf("track_%s", trackID)
+	// 1. Получаем musician_id из БД
+	var musicianID string
+	err := h.DB.QueryRow("SELECT musician_id FROM track WHERE id = ?", trackID).Scan(&musicianID)
+	if err != nil {
+		log.Println("ServeAudio: failed to get musician_id:", err)
+		http.Error(w, "Track not found", http.StatusNotFound)
+		return
+	}
 
+	objectName := fmt.Sprintf("musician_%s/tracks/track_%s", musicianID, trackID)
+
+	// 2. Достаём из MinIO
 	obj, err := h.MinioClient.GetObject(context.Background(), h.BucketName, objectName, minio.GetObjectOptions{})
 	if err != nil {
 		log.Println("ServeAudio: error getting object:", err)
-		http.Error(response, "Failed to fetch audio", http.StatusInternalServerError)
+		http.Error(w, "Failed to fetch audio", http.StatusInternalServerError)
 		return
 	}
 	defer obj.Close()
 
-	// Проверка, существует ли объект
 	stat, err := obj.Stat()
 	if err != nil {
 		log.Println("ServeAudio: object stat failed:", err)
-		http.Error(response, "Audio not found", http.StatusNotFound)
+		http.Error(w, "Audio not found", http.StatusNotFound)
 		return
 	}
 
-	response.Header().Set("Content-Type", "audio/mpeg")
-	response.Header().Set("Content-Length", fmt.Sprintf("%d", stat.Size))
-	io.Copy(response, obj)
+	w.Header().Set("Content-Type", "audio/mpeg")
+	w.Header().Set("Content-Length", fmt.Sprintf("%d", stat.Size))
+	io.Copy(w, obj)
 }
 
-// GET /media/image/{filename}
-func (h *MediaHandler) ServeImage(response http.ResponseWriter, request *http.Request) {
-	userID, ok := request.Context().Value("userID").(string)
+func (h *MediaHandler) ServeImage(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value("userID").(string)
 	if !ok || userID == "" {
-		http.Error(response, "Unauthorized", http.StatusUnauthorized)
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	filename := mux.Vars(request)["filename"]
+	filename := mux.Vars(r)["filename"]
 	if filename == "" {
-		http.Error(response, "Missing filename", http.StatusBadRequest)
+		http.Error(w, "Missing filename", http.StatusBadRequest)
 		return
 	}
 
-	objectPath := "music/" + filename // или другой путь в бакете
+	// Ожидаем имя в формате: album_<albumID>
+	if !strings.HasPrefix(filename, "album_") {
+		http.Error(w, "Invalid filename format", http.StatusBadRequest)
+		return
+	}
+	albumID := strings.TrimPrefix(filename, "album_")
+
+	// Достаём musician_id по album_id
+	var musicianID string
+	err := h.DB.QueryRow("SELECT musician_id FROM album WHERE id = ?", albumID).Scan(&musicianID)
+	if err != nil {
+		log.Println("ServeImage: failed to get musician_id:", err)
+		http.Error(w, "Album not found", http.StatusNotFound)
+		return
+	}
+
+	// Собираем путь к объекту
+	objectPath := fmt.Sprintf("musician_%s/cover/%s", musicianID, filename)
+
 	obj, err := h.MinioClient.GetObject(context.Background(), h.BucketName, objectPath, minio.GetObjectOptions{})
 	if err != nil {
 		log.Println("ServeImage: error getting object:", err)
-		http.Error(response, "Image not found", http.StatusNotFound)
+		http.Error(w, "Image not found", http.StatusNotFound)
 		return
 	}
 	defer obj.Close()
 
 	if strings.HasSuffix(filename, ".jpg") {
-		response.Header().Set("Content-Type", "image/jpeg")
+		w.Header().Set("Content-Type", "image/jpeg")
 	} else {
-		response.Header().Set("Content-Type", "application/octet-stream")
+		w.Header().Set("Content-Type", "application/octet-stream")
 	}
-	io.Copy(response, obj)
+	io.Copy(w, obj)
 }
