@@ -61,7 +61,7 @@ func main() {
 	mongoDatabase := mongoClient.Database("audiostreaming")
 
 	minioClient, err := minio.New("localhost:9000", &minio.Options{
-		Creds:  credentials.NewStaticV4("admin", "minioadmin", ""),
+		Creds:  credentials.NewStaticV4("admin", "b]Jklj-Vq>vZa;VL", ""),
 		Secure: false,
 	})
 	if err != nil {
