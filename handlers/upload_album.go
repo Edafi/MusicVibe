@@ -133,7 +133,7 @@ func (handler *UploadHandler) UploadAlbum(response http.ResponseWriter, request 
 	bucketName := "music"
 
 	// Путь к обложке: musician_{id}/cover/album_{id}.jpg
-	coverObject := fmt.Sprintf("musician_%s/cover/album_%s_%s", musicianID, albumID, coverHeader.Filename)
+	coverObject := fmt.Sprintf("musician_%s/cover/album_%s", musicianID, albumID)
 	coverPath, err := uploadToMinIO(handler.MinioClient, bucketName, coverObject, coverFile, coverHeader.Size, coverHeader.Header.Get("Content-Type"))
 	if err != nil {
 		log.Println("UploadAlbum: ", err)
