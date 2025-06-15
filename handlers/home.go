@@ -63,6 +63,9 @@ func (handler *HomeHandler) GetRecommendedTracks(response http.ResponseWriter, r
 			http.Error(response, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		baseURL := "http://37.46.130.29:8080"
+		tr.AudioURL = fmt.Sprintf("%s/media/audio/%s", baseURL, tr.ID)
+		tr.ImageURL = fmt.Sprintf("%s/media/image/%s", baseURL, filepath.Base(tr.ImageURL))
 		tracks = append(tracks, tr)
 	}
 
@@ -108,6 +111,8 @@ func (handler *HomeHandler) GetRecommendedAlbums(response http.ResponseWriter, r
 			http.Error(response, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		baseURL := "http://37.46.130.29:8080"
+		al.CoverUrl = fmt.Sprintf("%s/media/image/%s", baseURL, filepath.Base(al.CoverUrl))
 		albums = append(albums, al)
 	}
 
@@ -152,6 +157,9 @@ func (handler *HomeHandler) GetTrackedTracks(response http.ResponseWriter, reque
 			http.Error(response, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		baseURL := "http://37.46.130.29:8080"
+		tr.AudioURL = fmt.Sprintf("%s/media/audio/%s", baseURL, tr.ID)
+		tr.ImageURL = fmt.Sprintf("%s/media/image/%s", baseURL, filepath.Base(tr.ImageURL))
 		tracks = append(tracks, tr)
 	}
 
@@ -247,6 +255,8 @@ func (handler *HomeHandler) GetHomeRecommendedAlbums(response http.ResponseWrite
 			http.Error(response, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		baseURL := "http://37.46.130.29:8080"
+		al.CoverUrl = fmt.Sprintf("%s/media/image/%s", baseURL, filepath.Base(al.CoverUrl))
 		albums = append(albums, al)
 	}
 
@@ -293,6 +303,9 @@ func (handler *HomeHandler) GetHomeTrackedTracks(response http.ResponseWriter, r
 			http.Error(response, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		baseURL := "http://37.46.130.29:8080"
+		tr.AudioURL = fmt.Sprintf("%s/media/audio/%s", baseURL, tr.ID)
+		tr.ImageURL = fmt.Sprintf("%s/media/image/%s", baseURL, filepath.Base(tr.ImageURL))
 		tracks = append(tracks, tr)
 	}
 
