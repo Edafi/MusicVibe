@@ -199,7 +199,7 @@ func (handler *HomeHandler) GetHomeRecommendedTracks(response http.ResponseWrite
 			http.Error(response, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		baseURL := "http://localhost:8080"
+		baseURL := "http://37.46.130.29:8080"
 		tr.AudioURL = fmt.Sprintf("%s/media/audio/%s", baseURL, tr.ID)
 		tr.ImageURL = fmt.Sprintf("%s/media/image/%s", baseURL, filepath.Base(tr.ImageURL))
 		tracks = append(tracks, tr)
