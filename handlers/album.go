@@ -3,8 +3,10 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"path/filepath"
 
 	"github.com/Edafi/MusicVibe/models"
 	"github.com/gorilla/mux"
@@ -32,6 +34,8 @@ func (handler *AlbumHandler) GetAlbum(response http.ResponseWriter, request *htt
 		&album.CoverURL, &album.Description, &album.ArtistID, &album.ArtistName,
 		&album.ArtistAvatarURL,
 	)
+	baseURL := "http://37.46.130.29:8080"
+	album.CoverURL = fmt.Sprintf("%s/media/image/%s", baseURL, filepath.Base(album.CoverURL))
 	if err != nil {
 		log.Println("GetAlbum - Error fetching album:", err)
 		http.Error(response, "Album not found", http.StatusNotFound)
@@ -92,7 +96,9 @@ func (handler *AlbumHandler) GetAlbumTracks(response http.ResponseWriter, reques
 			log.Println("GetAlbumTracks - Error scanning row:", err)
 			continue
 		}
-
+		baseURL := "http://37.46.130.29:8080"
+		track.AudioURL = fmt.Sprintf("%s/media/audio/%s", baseURL, track.ID)
+		track.ImageURL = fmt.Sprintf("%s/media/image/%s", baseURL, filepath.Base(track.ImageURL))
 		tracks = append(tracks, track)
 	}
 

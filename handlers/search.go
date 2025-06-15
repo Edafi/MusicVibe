@@ -3,8 +3,10 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"path/filepath"
 	"strings"
 
 	"github.com/Edafi/MusicVibe/models"
@@ -46,6 +48,9 @@ func (handler *SearchHandler) GetNewTracks(response http.ResponseWriter, request
 			http.Error(response, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		baseURL := "http://37.46.130.29:8080"
+		tr.AudioURL = fmt.Sprintf("%s/media/audio/%s", baseURL, tr.ID)
+		tr.ImageURL = fmt.Sprintf("%s/media/image/%s", baseURL, filepath.Base(tr.ImageURL))
 		tracks = append(tracks, tr)
 	}
 	json.NewEncoder(response).Encode(tracks)
@@ -83,6 +88,9 @@ func (handler *SearchHandler) GetChartTracks(response http.ResponseWriter, reque
 			http.Error(response, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		baseURL := "http://37.46.130.29:8080"
+		tr.AudioURL = fmt.Sprintf("%s/media/audio/%s", baseURL, tr.ID)
+		tr.ImageURL = fmt.Sprintf("%s/media/image/%s", baseURL, filepath.Base(tr.ImageURL))
 		tracks = append(tracks, tr)
 	}
 	json.NewEncoder(response).Encode(tracks)
@@ -128,6 +136,9 @@ func (handler *SearchHandler) SearchTracks(response http.ResponseWriter, request
 			http.Error(response, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		baseURL := "http://37.46.130.29:8080"
+		tr.AudioURL = fmt.Sprintf("%s/media/audio/%s", baseURL, tr.ID)
+		tr.ImageURL = fmt.Sprintf("%s/media/image/%s", baseURL, filepath.Base(tr.ImageURL))
 		tracks = append(tracks, tr)
 	}
 	json.NewEncoder(response).Encode(tracks)

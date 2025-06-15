@@ -3,8 +3,10 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"path/filepath"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -103,7 +105,8 @@ func (handler *MusicianHandler) GetMusicians(response http.ResponseWriter, reque
 				album.Tracks = append(album.Tracks, trackID)
 			}
 			trackRows.Close()
-
+			baseURL := "http://37.46.130.29:8080"
+			album.CoverUrl = fmt.Sprintf("%s/media/image/%s", baseURL, filepath.Base(album.CoverUrl))
 			m.Albums = append(m.Albums, album)
 		}
 		albumRows.Close()
@@ -304,7 +307,8 @@ func (handler *MusicianHandler) GetMusician(response http.ResponseWriter, reques
 			trackIDs = append(trackIDs, trackID)
 		}
 		trackRows.Close()
-
+		baseURL := "http://37.46.130.29:8080"
+		album.CoverUrl = fmt.Sprintf("%s/media/image/%s", baseURL, filepath.Base(album.CoverUrl))
 		album.Tracks = trackIDs
 		albums = append(albums, album)
 	}
@@ -348,6 +352,9 @@ func (handler *MusicianHandler) GetPopularTracks(response http.ResponseWriter, r
 			http.Error(response, "Error scanning track", http.StatusInternalServerError)
 			return
 		}
+		baseURL := "http://37.46.130.29:8080"
+		t.AudioURL = fmt.Sprintf("%s/media/audio/%s", baseURL, t.ID)
+		t.ImageURL = fmt.Sprintf("%s/media/image/%s", baseURL, filepath.Base(t.ImageURL))
 		tracks = append(tracks, t)
 	}
 
