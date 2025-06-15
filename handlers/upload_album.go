@@ -32,7 +32,7 @@ func uploadToMinIO(client *minio.Client, bucketName, objectName string, file mul
 func (handler *UploadHandler) UploadAlbum(response http.ResponseWriter, request *http.Request) {
 	err := request.ParseMultipartForm(50 << 20) // 50MB
 	if err != nil {
-		log.Fatal("UploadAlbum: ", err)
+		log.Println("UploadAlbum: ", err)
 		http.Error(response, "Cannot parse multipart form", http.StatusBadRequest)
 		return
 	}
@@ -46,7 +46,8 @@ func (handler *UploadHandler) UploadAlbum(response http.ResponseWriter, request 
 	// Обложка
 	coverFile, coverHeader, err := request.FormFile("cover")
 	if err != nil {
-		log.Fatal("UploadAlbum: ", err)
+		log.Println("UploadAlbum: ", err)
+		log.Println("Content-Type:", request.Header.Get("Content-Type"))
 		http.Error(response, "Missing cover file", http.StatusBadRequest)
 		return
 	}
@@ -56,7 +57,7 @@ func (handler *UploadHandler) UploadAlbum(response http.ResponseWriter, request 
 	var genreID int
 	err = handler.DB.QueryRow(`SELECT id FROM genre WHERE name = ?`, genreName).Scan(&genreID)
 	if err != nil {
-		log.Fatal("UploadAlbum: ", err)
+		log.Print("UploadAlbum: ", err)
 		http.Error(response, "Invalid genre", http.StatusBadRequest)
 		return
 	}
@@ -65,7 +66,7 @@ func (handler *UploadHandler) UploadAlbum(response http.ResponseWriter, request 
 	var musicianID string
 	err = handler.DB.QueryRow(`SELECT id FROM musician WHERE user_id = ?`, userID).Scan(&musicianID)
 	if err != nil {
-		log.Fatal("UploadAlbum: ", err)
+		log.Println("UploadAlbum: ", err)
 		http.Error(response, "Musician not found", http.StatusBadRequest)
 		return
 	}
@@ -77,7 +78,7 @@ func (handler *UploadHandler) UploadAlbum(response http.ResponseWriter, request 
 	coverObject := fmt.Sprintf("musician_%s/cover/album_%s_%s", musicianID, albumID, coverHeader.Filename)
 	coverPath, err := uploadToMinIO(handler.MinioClient, bucketName, coverObject, coverFile, coverHeader.Size, coverHeader.Header.Get("Content-Type"))
 	if err != nil {
-		log.Fatal("UploadAlbum: ", err)
+		log.Println("UploadAlbum: ", err)
 		http.Error(response, "Failed to upload cover", http.StatusInternalServerError)
 		return
 	}
@@ -88,7 +89,7 @@ func (handler *UploadHandler) UploadAlbum(response http.ResponseWriter, request 
 		VALUES (?, ?, ?, ?, ?, ?)`,
 		albumID, musicianID, albumTitle, coverPath, genreID, albumDescription)
 	if err != nil {
-		log.Fatal("UploadAlbum: ", err)
+		log.Println("UploadAlbum: ", err)
 		http.Error(response, "Failed to insert album", http.StatusInternalServerError)
 		return
 	}
@@ -104,7 +105,7 @@ func (handler *UploadHandler) UploadAlbum(response http.ResponseWriter, request 
 
 		audioFile, err := audioFileHeader.Open()
 		if err != nil {
-			log.Fatal("UploadAlbum: ", err)
+			log.Println("UploadAlbum: ", err)
 			log.Println("Failed to open audio:", err)
 			continue
 		}
@@ -125,7 +126,6 @@ func (handler *UploadHandler) UploadAlbum(response http.ResponseWriter, request 
 			VALUES (?, ?, ?, ?, ?, ?)`,
 			trackID, title, albumID, musicianID, audioPath, genreID)
 		if err != nil {
-			log.Fatal("UploadAlbum: ", err)
 			log.Println("Failed to insert track:", err)
 			continue
 		}
