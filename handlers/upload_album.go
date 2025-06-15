@@ -37,6 +37,8 @@ func (handler *UploadHandler) UploadAlbum(response http.ResponseWriter, request 
 		return
 	}
 
+	fmt.Println("Content-Type:", request.Header.Get("Content-Type"))
+
 	// Парсим поля
 	albumTitle := request.FormValue("albumTitle")
 	albumDescription := request.FormValue("albumDescription")
@@ -52,6 +54,10 @@ func (handler *UploadHandler) UploadAlbum(response http.ResponseWriter, request 
 		return
 	}
 	defer coverFile.Close()
+
+	fmt.Println("Album:", albumTitle)
+	fmt.Println("Genre:", genreName)
+	fmt.Println("Cover filename:", coverHeader.Filename)
 
 	// Genre
 	var genreID int
