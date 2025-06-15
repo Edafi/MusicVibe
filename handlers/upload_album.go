@@ -58,6 +58,7 @@ func (handler *UploadHandler) UploadAlbum(response http.ResponseWriter, request 
 	fmt.Println("Album:", albumTitle)
 	fmt.Println("Genre:", genreName)
 	fmt.Println("Cover filename:", coverHeader.Filename)
+	fmt.Println("user_id:", userID)
 
 	// Genre
 	var genreID int
