@@ -8,6 +8,10 @@ import (
 	"log"
 	"mime/multipart"
 	"net/http"
+	"os/exec"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/Edafi/MusicVibe/middleware"
 	"github.com/google/uuid"
@@ -17,6 +21,24 @@ import (
 type UploadHandler struct {
 	DB          *sql.DB
 	MinioClient *minio.Client
+}
+
+func getAudioDuration(filePath string) (int, error) {
+	cmd := exec.Command("ffprobe", "-v", "quiet", "-print_format", "json", "-show_format", filePath)
+	out, err := cmd.Output()
+	if err != nil {
+		return 0, err
+	}
+	var data struct {
+		Format struct {
+			Duration string `json:"duration"`
+		} `json:"format"`
+	}
+	if err := json.Unmarshal(out, &data); err != nil {
+		return 0, err
+	}
+	seconds, _ := strconv.ParseFloat(data.Format.Duration, 64)
+	return int(seconds), nil
 }
 
 func uploadToMinIO(client *minio.Client, bucketName, objectName string, file multipart.File, fileSize int64, contentType string) (string, error) {
@@ -96,11 +118,13 @@ func (handler *UploadHandler) UploadAlbum(response http.ResponseWriter, request 
 		return
 	}
 
+	releaseDate := time.Now()
+
 	// Сохраняем альбом
 	_, err = handler.DB.Exec(`
-		INSERT INTO album (id, musician_id, title, cover_path, genre_id, description)
-		VALUES (?, ?, ?, ?, ?, ?)`,
-		albumID, musicianID, albumTitle, coverPath, genreID, albumDescription)
+		INSERT INTO album (id, musician_id, title, release_date, cover_path, genre_id, description, title_lower)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		albumID, musicianID, albumTitle, releaseDate, coverPath, genreID, albumDescription, strings.ToLower(albumTitle))
 	if err != nil {
 		log.Println("UploadAlbum: ", err)
 		http.Error(response, "Failed to insert album", http.StatusInternalServerError)
@@ -134,10 +158,19 @@ func (handler *UploadHandler) UploadAlbum(response http.ResponseWriter, request 
 			continue
 		}
 
+		duration, err := getAudioDuration(audioPath)
+		if err != nil {
+			log.Println("Failed to get duration of the track:", err)
+			continue
+		}
+		streamCount := 0
+		visibility := "public"
+		titleLower := strings.ToLower(title)
+
 		_, err = handler.DB.Exec(`
-			INSERT INTO track (id, title, album_id, musician_id, file_path, genre_id)
-			VALUES (?, ?, ?, ?, ?, ?)`,
-			trackID, title, albumID, musicianID, audioPath, genreID)
+			INSERT INTO track (id, title, album_id, musician_id, file_path, genre_id, duration, stream_count, visibility, title_lower)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			trackID, title, albumID, musicianID, audioPath, genreID, duration, streamCount, visibility, titleLower)
 		if err != nil {
 			log.Println("Failed to insert track:", err)
 			continue
