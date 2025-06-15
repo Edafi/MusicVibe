@@ -25,15 +25,9 @@ func (h *MediaHandler) ServeAudio(response http.ResponseWriter, request *http.Re
 		return
 	}
 
-	// Извлекаем путь из БД (можно также передавать весь путь в параметре)
-	var filePath string
-	err := h.MinioClient.FGetObject(context.Background(), h.BucketName, fmt.Sprintf("track_%s", trackID), filePath, minio.GetObjectOptions{})
-	if err != nil {
-		http.Error(response, "Audio not found", http.StatusNotFound)
-		return
-	}
+	objectName := fmt.Sprintf("track_%s", trackID)
 
-	obj, err := h.MinioClient.GetObject(context.Background(), h.BucketName, filePath, minio.GetObjectOptions{})
+	obj, err := h.MinioClient.GetObject(context.Background(), h.BucketName, objectName, minio.GetObjectOptions{})
 	if err != nil {
 		log.Println("ServeAudio: error getting object:", err)
 		http.Error(response, "Failed to fetch audio", http.StatusInternalServerError)
@@ -41,7 +35,16 @@ func (h *MediaHandler) ServeAudio(response http.ResponseWriter, request *http.Re
 	}
 	defer obj.Close()
 
+	// Проверка, существует ли объект
+	stat, err := obj.Stat()
+	if err != nil {
+		log.Println("ServeAudio: object stat failed:", err)
+		http.Error(response, "Audio not found", http.StatusNotFound)
+		return
+	}
+
 	response.Header().Set("Content-Type", "audio/mpeg")
+	response.Header().Set("Content-Length", fmt.Sprintf("%d", stat.Size))
 	io.Copy(response, obj)
 }
 
