@@ -95,9 +95,5 @@ func SetupRoutes(db *sql.DB, mongoDatabase *mongo.Database, minioClient *minio.C
 		Debug:          false,
 	})
 
-	handler := c.Handler(router) // оборачиваем router в cors-обработчик
-
-	http.ListenAndServe(":8080", handler)
-
 	return c.Handler(router)
 }

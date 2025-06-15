@@ -77,12 +77,14 @@ func (h *MediaHandler) ServeImage(w http.ResponseWriter, r *http.Request) {
 	albumID := strings.TrimPrefix(strings.TrimSuffix(filename, ".jpg"), "album_")
 
 	var musicianID string
+	log.Println("Trying to fetch albumID:", albumID)
 	err := h.DB.QueryRow("SELECT musician_id FROM album WHERE id = ?", albumID).Scan(&musicianID)
 	if err != nil {
-		log.Println("ServeImage: failed to get musician_id:", err)
+		log.Println("ServeImage: failed to get musician_id for album", albumID, "error:", err)
 		http.Error(w, "Album not found", http.StatusNotFound)
 		return
 	}
+	log.Println("Found musicianID:", musicianID)
 
 	objectPath := fmt.Sprintf("musician_%s/cover/%s", musicianID, filename)
 
