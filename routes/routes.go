@@ -7,11 +7,12 @@ import (
 	"github.com/Edafi/MusicVibe/handlers"
 	"github.com/Edafi/MusicVibe/middleware"
 	"github.com/gorilla/mux"
+	"github.com/minio/minio-go/v7"
 	"github.com/rs/cors"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func SetupRoutes(db *sql.DB, mongoDatabase *mongo.Database) http.Handler {
+func SetupRoutes(db *sql.DB, mongoDatabase *mongo.Database, minioClient *minio.Client) http.Handler {
 	router := mux.NewRouter()
 
 	// обработчики пользователя
@@ -79,6 +80,9 @@ func SetupRoutes(db *sql.DB, mongoDatabase *mongo.Database) http.Handler {
 	secured.HandleFunc("/following", following.GetFollowingMusicians).Methods("GET")
 	secured.HandleFunc("/following/{id}", following.FollowMusician).Methods("POST")
 	secured.HandleFunc("/following/{id}", following.UnfollowMusician).Methods("DELETE")
+
+	uploadHandler := &handlers.UploadHandler{DB: db, MinioClient: minioClient}
+	secured.HandleFunc("/upload/album", uploadHandler.UploadAlbum).Methods("POST")
 
 	// CORS
 	c := cors.New(cors.Options{

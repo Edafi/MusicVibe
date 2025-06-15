@@ -29,6 +29,6 @@ type AlbumPreview struct {
 	Title       string   `json:"title"`
 	Year        int      `json:"year"`
 	CoverUrl    string   `json:"coverUrl"`
-	Tracks      []string `json:"tracks"` // или []int
+	Tracks      []string `json:"tracks"`
 	Description string   `json:"description"`
 }

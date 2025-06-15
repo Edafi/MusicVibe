@@ -9,6 +9,8 @@ import (
 
 	"github.com/Edafi/MusicVibe/routes"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -58,7 +60,15 @@ func main() {
 
 	mongoDatabase := mongoClient.Database("audiostreaming")
 
-	handler := routes.SetupRoutes(db, mongoDatabase)
+	minioClient, err := minio.New("localhost:9000", &minio.Options{
+		Creds:  credentials.NewStaticV4("admin", "minioadmin", ""),
+		Secure: false,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	handler := routes.SetupRoutes(db, mongoDatabase, minioClient)
 	log.Println("Server running on :8080")
 	log.Println(http.ListenAndServe(":8080", handler))
 }
