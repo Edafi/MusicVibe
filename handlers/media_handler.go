@@ -59,26 +59,24 @@ func (h *MediaHandler) ServeAudio(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *MediaHandler) ServeImage(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value("userID").(string)
-	if !ok || userID == "" {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-
 	filename := mux.Vars(r)["filename"]
 	if filename == "" {
 		http.Error(w, "Missing filename", http.StatusBadRequest)
 		return
 	}
 
-	// Ожидаем имя в формате: album_<albumID>
 	if !strings.HasPrefix(filename, "album_") {
 		http.Error(w, "Invalid filename format", http.StatusBadRequest)
 		return
 	}
-	albumID := strings.TrimPrefix(filename, "album_")
 
-	// Достаём musician_id по album_id
+	// Файл должен иметь .jpg
+	if !strings.HasSuffix(filename, ".jpg") {
+		filename += ".jpg"
+	}
+
+	albumID := strings.TrimPrefix(strings.TrimSuffix(filename, ".jpg"), "album_")
+
 	var musicianID string
 	err := h.DB.QueryRow("SELECT musician_id FROM album WHERE id = ?", albumID).Scan(&musicianID)
 	if err != nil {
@@ -87,7 +85,6 @@ func (h *MediaHandler) ServeImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Собираем путь к объекту
 	objectPath := fmt.Sprintf("musician_%s/cover/%s", musicianID, filename)
 
 	obj, err := h.MinioClient.GetObject(context.Background(), h.BucketName, objectPath, minio.GetObjectOptions{})
@@ -98,10 +95,6 @@ func (h *MediaHandler) ServeImage(w http.ResponseWriter, r *http.Request) {
 	}
 	defer obj.Close()
 
-	if strings.HasSuffix(filename, ".jpg") {
-		w.Header().Set("Content-Type", "image/jpeg")
-	} else {
-		w.Header().Set("Content-Type", "application/octet-stream")
-	}
+	w.Header().Set("Content-Type", "image/jpeg")
 	io.Copy(w, obj)
 }

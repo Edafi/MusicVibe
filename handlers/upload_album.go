@@ -133,7 +133,7 @@ func (handler *UploadHandler) UploadAlbum(response http.ResponseWriter, request 
 	bucketName := "music"
 
 	// Путь к обложке: musician_{id}/cover/album_{id}.jpg
-	coverObject := fmt.Sprintf("musician_%s/cover/album_%s", musicianID, albumID)
+	coverObject := fmt.Sprintf("musician_%s/cover/album_%s.jpg", musicianID, albumID)
 	coverPath, err := uploadToMinIO(handler.MinioClient, bucketName, coverObject, coverFile, coverHeader.Size, coverHeader.Header.Get("Content-Type"))
 	if err != nil {
 		log.Println("UploadAlbum: ", err)
@@ -182,7 +182,7 @@ func (handler *UploadHandler) UploadAlbum(response http.ResponseWriter, request 
 
 		trackID := uuid.New().String()
 
-		objectName := fmt.Sprintf("musician_%s/tracks/track_%s", musicianID, trackID)
+		objectName := fmt.Sprintf("musician_%s/tracks/track_%s.mp3", musicianID, trackID)
 		audioPath, err := uploadToMinIO(handler.MinioClient, bucketName, objectName, audioFile, audioFileHeader.Size, audioFileHeader.Header.Get("Content-Type"))
 		if err != nil {
 			log.Println("Failed to upload audio:", err)
